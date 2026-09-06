@@ -1,0 +1,2632 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#1e3a5f" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="بتن‌لب" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png" />
+  <link rel="stylesheet" href="./fonts/vazirmatn.css" />
+  <title>بتن‌لب | مدیریت نمونه‌های بتن</title>
+  <style>
+    :root {
+      --bg: #f4f6f9;
+      --surface: #ffffff;
+      --surface-2: #fbfcfd;
+      --border: #e3e8ef;
+      --border-strong: #cbd5e1;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --text-soft: #94a3b8;
+      --primary: #1e3a5f;
+      --primary-2: #2c5282;
+      --primary-soft: #eaf0f7;
+      --accent: #f97316;
+      --accent-soft: #fff2e6;
+      --success: #16a34a;
+      --success-soft: #e7f6ec;
+      --warning: #d97706;
+      --warning-soft: #fef3e2;
+      --danger: #dc2626;
+      --danger-soft: #fdecec;
+      --info: #0891b2;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+      --shadow: 0 2px 6px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+      --shadow-lg: 0 8px 24px rgba(15, 23, 42, 0.10);
+      --radius-sm: 6px;
+      --radius: 10px;
+      --radius-lg: 14px;
+      --nav-h: 68px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0;
+      font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, 'Segoe UI', Tahoma, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 15px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body { min-height: 100vh; padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px)); }
+    button { font-family: inherit; cursor: pointer; }
+    input, select, textarea { font-family: inherit; font-size: 15px; }
+    input[type=number] { -moz-appearance: textfield; }
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+    /* Header */
+    .app-header {
+      background: linear-gradient(135deg, #1e3a5f 0%, #2c5282 100%);
+      color: #fff;
+      padding: 16px 18px calc(16px + env(safe-area-inset-top, 0px));
+      padding-top: calc(16px + env(safe-area-inset-top, 0px));
+      position: sticky; top: 0; z-index: 40;
+      box-shadow: var(--shadow);
+    }
+    .app-header .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .app-header .brand { display: flex; align-items: center; gap: 10px; }
+    .app-header .brand-icon {
+      width: 36px; height: 36px; border-radius: 8px;
+      background: rgba(255,255,255,0.13);
+      display: grid; place-items: center;
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+    .app-header h1 { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: 0; }
+    .app-header .sub { font-size: 11px; opacity: 0.75; font-weight: 400; margin-top: 1px; }
+    .app-header .today {
+      font-size: 12px; opacity: 0.8; font-variant-numeric: tabular-nums;
+      background: rgba(255,255,255,0.10); padding: 6px 10px; border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.13);
+    }
+
+    /* Container */
+    .container { max-width: 720px; margin: 0 auto; padding: 16px; }
+    .view { display: none; }
+    .view.active { display: block; animation: fadeIn .18s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+    /* Card */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+    .card-title {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 13px; font-weight: 600; color: var(--primary);
+      text-transform: uppercase; letter-spacing: 0.02em;
+      padding-bottom: 10px; margin-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .card-title .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+
+    /* Form */
+    .field { margin-bottom: 14px; }
+    .field label {
+      display: block; font-size: 13px; font-weight: 500;
+      color: var(--text); margin-bottom: 6px;
+    }
+    .field label .req { color: var(--danger); margin-inline-start: 3px; }
+    .field .hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+    .input, .select, .textarea {
+      width: 100%;
+      padding: 10px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      transition: all .15s;
+      outline: none;
+      font-variant-numeric: tabular-nums;
+    }
+    .input:focus, .select:focus, .textarea:focus {
+      border-color: var(--primary-2);
+      box-shadow: 0 0 0 3px rgba(44, 82, 130, 0.12);
+    }
+    .textarea { min-height: 72px; resize: vertical; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+
+    /* Segmented */
+    .segmented {
+      display: flex; background: var(--surface-2);
+      border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
+      padding: 3px; gap: 3px;
+    }
+    .segmented button {
+      flex: 1; padding: 8px 10px; border: 0; background: transparent;
+      color: var(--text-muted); font-size: 13px; font-weight: 500;
+      border-radius: 5px; transition: all .15s;
+    }
+    .segmented button.active {
+      background: var(--primary); color: #fff;
+      box-shadow: 0 1px 2px rgba(30,58,95,0.35);
+    }
+
+    /* Toggle switch */
+    .switch { position: relative; width: 42px; height: 24px; flex-shrink: 0; display: inline-block; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .switch .slider {
+      position: absolute; inset: 0; background: #cbd5e1;
+      border-radius: 999px; transition: .2s; cursor: pointer;
+    }
+    .switch .slider::before {
+      content: ''; position: absolute; width: 18px; height: 18px;
+      border-radius: 50%; background: #fff; top: 3px; right: 3px;
+      transition: .2s; box-shadow: 0 1px 2px rgba(0,0,0,0.25);
+    }
+    .switch input:checked + .slider { background: var(--success); }
+    .switch input:checked + .slider::before { transform: translateX(-18px); }
+    .auto-sync-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 14px;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 11px 16px; border-radius: var(--radius-sm);
+      border: 1px solid transparent; font-weight: 500; font-size: 14px;
+      transition: all .15s; text-decoration: none;
+    }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: #17304e; }
+    .btn-primary:active { transform: translateY(1px); }
+    .btn-outline { background: var(--surface); border-color: var(--border-strong); color: var(--text); }
+    .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+    .btn-danger { background: var(--surface); border-color: var(--danger); color: var(--danger); }
+    .btn-danger:hover { background: var(--danger); color: #fff; }
+    .btn-accent { background: var(--accent); color: #fff; }
+    .btn-accent:hover { background: #ea6a08; }
+    .btn-block { width: 100%; }
+    .btn-sm { padding: 7px 10px; font-size: 12px; }
+    .btn-row { display: flex; gap: 8px; }
+
+    /* Sample list */
+    .sample {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 14px; margin-bottom: 10px;
+      box-shadow: var(--shadow-sm);
+      transition: transform .12s, box-shadow .12s;
+    }
+    .sample:hover { box-shadow: var(--shadow); }
+    .sample-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+    .sample-title { font-weight: 600; font-size: 15px; color: var(--primary); }
+    .sample-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .sample-body {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px;
+      font-size: 13px; padding: 10px 0;
+      border-top: 1px dashed var(--border);
+      border-bottom: 1px dashed var(--border);
+      margin-bottom: 10px;
+    }
+    .sample-body .k { color: var(--text-muted); font-size: 12px; }
+    .sample-body .v { color: var(--text); font-weight: 500; font-variant-numeric: tabular-nums; }
+    .sample-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    /* Status badges */
+    .badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11px; font-weight: 600; padding: 4px 9px;
+      border-radius: 999px; white-space: nowrap;
+      border: 1px solid transparent;
+    }
+    .badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; }
+    .badge-wait { background: var(--warning-soft); color: var(--warning); }
+    .badge-wait::before { background: var(--warning); }
+    .badge-ready { background: var(--accent-soft); color: var(--accent); }
+    .badge-ready::before { background: var(--accent); animation: pulse 1.5s infinite; }
+    .badge-done { background: var(--success-soft); color: var(--success); }
+    .badge-done::before { background: var(--success); }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    /* Result box */
+    .result-box {
+      background: linear-gradient(135deg, var(--primary-soft), #f0f6fc);
+      border: 1px solid #d3e0ee;
+      border-radius: var(--radius);
+      padding: 14px 16px; margin-top: 8px;
+    }
+    .result-box .k { font-size: 12px; color: var(--text-muted); }
+    .result-box .v { font-size: 22px; font-weight: 700; color: var(--primary); font-variant-numeric: tabular-nums; }
+    .result-box .u { font-size: 13px; color: var(--text-muted); margin-inline-start: 4px; font-weight: 500; }
+
+    /* Empty state */
+    .empty {
+      text-align: center; padding: 40px 20px; color: var(--text-muted);
+    }
+    .empty svg { opacity: 0.45; margin-bottom: 10px; }
+    .empty .title { font-weight: 500; color: var(--text); margin-bottom: 4px; }
+
+    /* Filters */
+    .filters {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px;
+    }
+    .filters select {
+      font-size: 13px; padding: 8px 10px;
+      background: var(--surface); border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm); color: var(--text);
+    }
+
+    /* Stats bar */
+    .stats {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px;
+    }
+    .stat {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 10px 8px; text-align: center;
+      box-shadow: var(--shadow-sm);
+    }
+    .stat .n { font-size: 18px; font-weight: 700; color: var(--primary); font-variant-numeric: tabular-nums; }
+    .stat .l { font-size: 10.5px; color: var(--text-muted); margin-top: 2px; }
+    .stat.accent .n { color: var(--accent); }
+    .stat.success .n { color: var(--success); }
+    .stat.warn .n { color: var(--warning); }
+
+    /* Bottom navigation */
+    .nav {
+      position: fixed; bottom: 0; inset-inline: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      z-index: 50;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      box-shadow: 0 -2px 8px rgba(15,23,42,0.04);
+    }
+    .nav button {
+      background: transparent; border: 0; padding: 10px 4px 8px;
+      color: var(--text-muted);
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      font-size: 11px; font-weight: 500;
+      border-top: 2px solid transparent;
+      transition: color .15s, border-color .15s;
+    }
+    .nav button.active { color: var(--primary); border-top-color: var(--primary); }
+    .nav button svg { width: 22px; height: 22px; stroke-width: 1.7; }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(15,23,42,0.45);
+      z-index: 100; display: none; align-items: flex-end; justify-content: center;
+      padding: 0;
+    }
+    .modal-backdrop.active { display: flex; animation: fadeIn .18s ease-out; }
+    .modal {
+      background: var(--surface); width: 100%; max-width: 480px;
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      padding: 18px; max-height: 90vh; overflow-y: auto;
+      box-shadow: var(--shadow-lg);
+      animation: slideUp .22s ease-out;
+    }
+    @keyframes slideUp { from { transform: translateY(20px); } to { transform: none; } }
+    .modal-title { font-size: 15px; font-weight: 600; color: var(--primary); margin: 0 0 14px; }
+
+    /* Toast */
+    .toast-wrap { position: fixed; top: 12px; inset-inline: 12px; z-index: 200; display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: none; }
+    .toast {
+      background: #1e293b; color: #fff; padding: 10px 16px; border-radius: 8px;
+      font-size: 13px; font-weight: 500; box-shadow: var(--shadow-lg);
+      max-width: 90%; animation: toastIn .2s ease-out;
+    }
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    @keyframes toastIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+
+    /* Jalali date picker */
+    .jdp {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 10px;
+      user-select: none;
+    }
+    .jdp-head { display: flex; justify-content: space-between; align-items: center; padding: 4px 6px 10px; }
+    .jdp-head .lbl { font-weight: 600; color: var(--primary); font-size: 14px; }
+    .jdp-head button {
+      background: var(--surface-2); border: 1px solid var(--border);
+      width: 30px; height: 30px; border-radius: 6px; color: var(--text);
+      display: grid; place-items: center;
+    }
+    .jdp-weeks { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; font-size: 11px; color: var(--text-muted); text-align: center; padding: 4px 0; }
+    .jdp-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+    .jdp-day {
+      aspect-ratio: 1; display: grid; place-items: center;
+      background: transparent; border: 1px solid transparent;
+      border-radius: 6px; font-size: 13px; color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+    .jdp-day:hover { background: var(--primary-soft); }
+    .jdp-day.other { color: var(--text-soft); opacity: 0.5; }
+    .jdp-day.today { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+    .jdp-day.selected { background: var(--primary); color: #fff; }
+
+    /* Small helpers */
+    .row-between { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .muted { color: var(--text-muted); font-size: 12px; }
+    .divider { height: 1px; background: var(--border); margin: 12px 0; }
+    .tag { display: inline-block; padding: 2px 8px; background: var(--primary-soft); color: var(--primary); border-radius: 4px; font-size: 11px; font-weight: 500; }
+
+    @media (max-width: 380px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .filters { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="row">
+    <div class="brand">
+      <div class="brand-icon" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 12l9 4 9-4"/><path d="M3 17l9 4 9-4"/>
+        </svg>
+      </div>
+      <div>
+        <h1>بتن‌لب</h1>
+        <div class="sub">by MOSTAFA AZIZI</div>
+      </div>
+    </div>
+    <div class="today" id="todayLabel">—</div>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- VIEW: REGISTER -->
+  <section id="view-register" class="view active">
+    <div class="card">
+      <div class="card-title"><span class="dot"></span> ثبت نمونه جدید</div>
+      <form id="sampleForm" novalidate>
+        <div class="field">
+          <label>نام طرح <span class="req">*</span></label>
+          <input class="input" id="f-planName" type="text" placeholder="مثلاً D.2" required maxlength="40" />
+        </div>
+
+        <div class="field">
+          <label>نام نمونه <span class="req">*</span></label>
+          <input class="input" id="f-sampleName" type="text" placeholder="مثلاً بتن فونداسیون، ستون پارت ۱ و ..." required maxlength="50" />
+        </div>
+
+        <div class="grid-2">
+          <div class="field">
+            <label>تعداد کل نمونه‌های این طرح <span class="req">*</span></label>
+            <input class="input" id="f-totalCount" type="number" min="1" max="99" value="3" required />
+          </div>
+          <div class="field">
+            <label>شماره نمونه <span class="req">*</span></label>
+            <input class="input" id="f-sampleNo" type="number" min="1" max="99" value="1" required />
+          </div>
+        </div>
+
+        <div class="field">
+          <label>سن تست (روز) <span class="req">*</span></label>
+          <div class="segmented" id="ageSeg" role="tablist">
+            <button type="button" data-age="3">۳</button>
+            <button type="button" data-age="7" class="active">۷</button>
+            <button type="button" data-age="14">۱۴</button>
+            <button type="button" data-age="28">۲۸</button>
+            <button type="button" data-age="42">۴۲</button>
+            <button type="button" data-age="90">۹۰</button>
+          </div>
+          <input type="hidden" id="f-testAge" value="7" />
+          <div class="hint">یا وارد کردن مقدار دلخواه:</div>
+          <input class="input" id="f-testAgeCustom" type="number" min="1" max="365" placeholder="سن دلخواه (روز)" style="margin-top:6px" />
+        </div>
+
+        <div class="field">
+          <label>تاریخ ساخت (شمسی) <span class="req">*</span></label>
+          <input class="input" id="f-buildDate" type="text" readonly placeholder="انتخاب تاریخ" style="cursor:pointer;background:var(--surface-2)"/>
+          <div class="hint">پیش‌فرض: امروز — برای تغییر، ضربه بزنید</div>
+        </div>
+
+        <div class="field">
+          <label>نوع قالب <span class="req">*</span></label>
+          <div class="segmented" id="moldSeg">
+            <button type="button" data-mold="cube" class="active">مکعبی</button>
+            <button type="button" data-mold="cylinder">استوانه‌ای</button>
+          </div>
+          <input type="hidden" id="f-moldType" value="cube" />
+        </div>
+
+        <div id="cubeDims" class="grid-3">
+          <div class="field">
+            <label>طول (mm)</label>
+            <input class="input" id="f-length" type="number" min="1" step="0.1" value="150" />
+          </div>
+          <div class="field">
+            <label>عرض (mm)</label>
+            <input class="input" id="f-width" type="number" min="1" step="0.1" value="150" />
+          </div>
+          <div class="field">
+            <label>ارتفاع (mm)</label>
+            <input class="input" id="f-height" type="number" min="1" step="0.1" value="150" />
+          </div>
+        </div>
+
+        <div id="cylDims" class="grid-2" style="display:none">
+          <div class="field">
+            <label>قطر (mm)</label>
+            <input class="input" id="f-diameter" type="number" min="1" step="0.1" value="150" />
+          </div>
+          <div class="field">
+            <label>ارتفاع (mm)</label>
+            <input class="input" id="f-cylHeight" type="number" min="1" step="0.1" value="300" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label>یادداشت (اختیاری)</label>
+          <textarea class="textarea" id="f-notes" placeholder="توضیحات اضافه، نسبت اختلاط، شرایط عمل‌آوری و ..." maxlength="500"></textarea>
+        </div>
+
+        <div class="btn-row">
+          <button type="submit" class="btn btn-primary btn-block" id="saveSampleBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            ذخیره نمونه
+          </button>
+          <button type="button" class="btn btn-outline" id="resetFormBtn">پاک کردن</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- VIEW: LIST -->
+  <section id="view-list" class="view">
+    <div class="stats" id="statsBar"></div>
+
+    <div class="filters">
+      <select id="filterPlan"><option value="">همه طرح‌ها</option></select>
+      <select id="filterAge">
+        <option value="">همه سنین</option>
+        <option value="3">۳ روزه</option>
+        <option value="7">۷ روزه</option>
+        <option value="14">۱۴ روزه</option>
+        <option value="28">۲۸ روزه</option>
+        <option value="42">۴۲ روزه</option>
+        <option value="90">۹۰ روزه</option>
+      </select>
+      <select id="filterStatus">
+        <option value="">همه وضعیت‌ها</option>
+        <option value="wait">در انتظار تست</option>
+        <option value="ready">آماده تست</option>
+        <option value="done">تست انجام شده</option>
+      </select>
+    </div>
+
+    <div id="samplesList"></div>
+  </section>
+
+    <!-- VIEW: TEST -->
+  <section id="view-test" class="view">
+    <div class="card">
+      <div class="card-title"><span class="dot"></span> ثبت نتیجه تست</div>
+
+      <div class="field">
+        <label>نوع آزمایش <span class="req">*</span></label>
+        <div class="segmented" id="testKindSeg">
+          <button type="button" data-kind="compression" class="active">فشاری</button>
+          <button type="button" data-kind="flexure">خمشی</button>
+          <button type="button" data-kind="tension">کششی</button>
+        </div>
+        <input type="hidden" id="t-kind" value="compression" />
+        <div class="hint" id="testKindHint">مقاومت فشاری: σ = F / A</div>
+      </div>
+
+      <div class="field">
+        <label>انتخاب نمونه <span class="req">*</span></label>
+        <select class="select" id="t-sample"></select>
+        <div class="hint">نمونه‌های آماده تست در ابتدای لیست نمایش داده می‌شوند</div>
+      </div>
+
+      <div id="testSampleInfo" style="display:none"></div>
+
+      <div class="grid-2">
+        <div class="field">
+          <label>نیروی شکست <span class="req">*</span></label>
+          <input class="input" id="t-force" type="number" min="0" step="0.01" placeholder="مقدار عددی"/>
+        </div>
+        <div class="field">
+          <label>واحد نیرو</label>
+          <select class="select" id="t-unit" style="padding-top:9px;padding-bottom:9px">
+            <option value="N">نیوتن (N)</option>
+            <option value="kN">کیلونیوتن (kN)</option>
+            <option value="kgf">کیلوگرم (kg)</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="flexureExtras" style="display:none">
+        <div class="grid-2">
+          <div class="field">
+            <label>دهانه بارگذاری L (mm)</label>
+            <input class="input" id="t-span" type="number" min="1" step="0.1" placeholder="مثلاً ۴۵۰"/>
+          </div>
+          <div class="field">
+            <label>آرایش بارگذاری</label>
+            <select class="select" id="t-flexSetup">
+              <option value="third">سه نقطه‌ای (مرکزی)</option>
+              <option value="third4">چهار نقطه‌ای (ثلث دهانه)</option>
+            </select>
+          </div>
+        </div>
+        <div class="hint" style="margin-top:-6px;margin-bottom:12px">اگر خالی بماند، دهانه = ۳ برابر ارتفاع مقطع فرض می‌شود (ASTM C78 / ISIRI).</div>
+      </div>
+
+      <div class="field">
+        <label>تاریخ انجام تست</label>
+        <input class="input" id="t-testDate" type="text" readonly style="cursor:pointer;background:var(--surface-2)"/>
+      </div>
+
+      <div class="result-box">
+        <div class="k" id="strengthLabel">مقاومت فشاری محاسبه‌شده</div>
+        <div><span class="v" id="strengthVal">—</span><span class="u">MPa</span></div>
+        <div class="muted" id="strengthDetail" style="margin-top:4px">نیرو و نمونه را انتخاب کنید</div>
+      </div>
+
+      <div style="margin-top:14px">
+        <button type="button" class="btn btn-primary btn-block" id="saveTestBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          ذخیره نتیجه تست
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- VIEW: SETTINGS -->
+  <section id="view-settings" class="view">
+    <div class="card">
+      <div class="card-title"><span class="dot"></span> همگام‌سازی بین دستگاه‌ها</div>
+      <div id="syncPanel"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="dot"></span> خروجی و پشتیبان‌گیری</div>
+      <p class="muted" style="margin-top:0">خروجی رسمی PDF آزمایشگاه با طرح مهندسی شکیل، یا فایل پشتیبان متنی برای ذخیره محلی تهیه کنید.</p>
+      <div class="btn-row" style="flex-direction:column">
+        <button class="btn btn-accent btn-block" id="pdfBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          تهیه و چاپ گزارش PDF رسمی
+        </button>
+        <button class="btn btn-primary btn-block" id="exportBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          دانلود خروجی متنی (.txt)
+        </button>
+        <button class="btn btn-outline btn-block" id="importBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          بازیابی از فایل متنی (.txt)
+        </button>
+        <input type="file" id="importInput" accept=".txt,text/plain" hidden />
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="dot"></span> اطلاعات ذخیره‌سازی</div>
+      <div id="storageInfo" class="muted">در حال بارگذاری...</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="color:var(--danger)"><span class="dot" style="background:var(--danger)"></span> ناحیه خطر</div>
+      <p class="muted" style="margin-top:0">با پاک کردن، همه نمونه‌ها و نتایج تست به طور کامل حذف می‌شوند. این عمل قابل بازگشت نیست.</p>
+      <button class="btn btn-danger btn-block" id="clearBtn">پاک کردن همه داده‌ها</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="dot"></span> درباره برنامه</div>
+      <p class="muted" style="margin-top:0">
+        <strong style="color:var(--text)">بتن‌لب</strong> — نسخه ۵.۳<br/>
+        نرم‌افزار مدیریت نمونه‌های بتن آزمایشگاهی و محاسبه مقاومت فشاری بر اساس نوع و ابعاد قالب.
+        داده‌ها به صورت محلی در مرورگر شما (IndexedDB) ذخیره می‌شوند و قابل نصب به عنوان اپلیکیشن موبایل هستند.
+      </p>
+      <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <div>
+          <div style="font-size:11px;color:var(--text-muted);letter-spacing:0.05em">DEVELOPED BY</div>
+          <div style="font-size:15px;font-weight:600;color:var(--primary);letter-spacing:0.08em;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">MOSTAFA AZIZI</div>
+        </div>
+        <div style="width:36px;height:36px;border-radius:8px;background:var(--primary-soft);display:grid;place-items:center;color:var(--primary)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7h-9M14 17H5M17 3l4 4-4 4M7 21l-4-4 4-4"/></svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- Bottom navigation -->
+<nav class="nav" id="bottomNav">
+  <button data-view="register" class="active">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    نمونه جدید
+  </button>
+  <button data-view="list">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+    نمونه‌ها
+  </button>
+  <button data-view="test">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2h6l1 3h-8z"/><path d="M8 5h8l-1 15a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+    تست
+  </button>
+  <button data-view="settings">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    تنظیمات
+  </button>
+</nav>
+
+<!-- Modal -->
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+/* ============================================================
+ * بتن‌لب — Concrete Sample Manager PWA
+ * Single-file vanilla JS application
+ * ============================================================ */
+
+/* ---------- Jalali (Shamsi) Calendar ----------
+ * Based on Behdad Esfahbod's Jalaali algorithm.
+ */
+const Jalaali = (function() {
+  function div(a,b){ return ~~(a/b); }
+  function jalCal(jy){
+    var breaks=[-61,9,38,199,426,686,756,818,1111,1181,1210,1635,2060,2097,2192,2262,2324,2394,2456,3178];
+    var bl=breaks.length, gy=jy+621, leapJ=-14, jp=breaks[0], jm,jump,leap,n,i;
+    if(jy<jp||jy>=breaks[bl-1]) throw new Error('Invalid Jalali year '+jy);
+    for(i=1;i<bl;i++){
+      jm=breaks[i]; jump=jm-jp;
+      if(jy<jm) break;
+      leapJ=leapJ+div(jump,33)*8+div(jump%33,4);
+      jp=jm;
+    }
+    n=jy-jp;
+    leapJ=leapJ+div(n,33)*8+div(((n%33)+3),4);
+    if((jump%33)===4 && (jump-n)===4) leapJ+=1;
+    var leapG=div(gy,4)-div((div(gy,100)+1)*3,4)-150;
+    var march=20+leapJ-leapG;
+    if((jump-n)<6) n=n-jump+div((jump+4),33)*33;
+    leap=(((n+1)%33)-1)%4;
+    if(leap===-1) leap=4;
+    return {leap:leap, gy:gy, march:march};
+  }
+  function j2d(jy,jm,jd){
+    var r=jalCal(jy);
+    return g2d(r.gy,3,r.march)+(jm-1)*31-div(jm,7)*(jm-7)+jd-1;
+  }
+  function d2j(jdn){
+    var gy=d2g(jdn).gy, jy=gy-621, r=jalCal(jy), jdn1f=g2d(gy,3,r.march), k, jm, jd;
+    k=jdn-jdn1f;
+    if(k>=0){
+      if(k<=185){ jm=1+div(k,31); jd=(k%31)+1; return {jy:jy,jm:jm,jd:jd}; }
+      else k-=186;
+    }else{
+      jy-=1; k+=179;
+      if(r.leap===1) k+=1;
+    }
+    jm=7+div(k,30); jd=(k%30)+1;
+    return {jy:jy,jm:jm,jd:jd};
+  }
+  function g2d(gy,gm,gd){
+    var d=div((gy+div(gm-8,6)+100100)*1461,4)+div(153*((gm+9)%12)+2,5)+gd-34840408;
+    d=d-div(div(gy+100100+div(gm-8,6),100)*3,4)+752;
+    return d;
+  }
+  function d2g(jdn){
+    var j=4*jdn+139361631;
+    j=j+div(div(4*jdn+183187720,146097)*3,4)*4-3908;
+    var i=div((j%1461),4)*5+308;
+    var gd=div((i%153),5)+1;
+    var gm=(div(i,153)%12)+1;
+    var gy=div(j,1461)-100100+div(8-gm,6);
+    return {gy:gy,gm:gm,gd:gd};
+  }
+  function isLeap(jy){ return jalCal(jy).leap===0; }
+  function toJalaali(date){
+    var g=g2d(date.getFullYear(),date.getMonth()+1,date.getDate());
+    return d2j(g);
+  }
+  function toGregorian(jy,jm,jd){
+    var g=d2g(j2d(jy,jm,jd));
+    return new Date(g.gy,g.gm-1,g.gd);
+  }
+  return { toJalaali, toGregorian, j2d, d2j, isLeap };
+})();
+
+/* ---------- Date helpers ---------- */
+const FA_MONTHS=['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
+const FA_WEEKDAYS_SHORT=['ش','ی','د','س','چ','پ','ج'];
+const FA_WEEKDAYS_FULL=['شنبه','یکشنبه','دوشنبه','سه‌شنبه','چهارشنبه','پنج‌شنبه','جمعه'];
+
+function toFa(str){
+  return String(str).replace(/[0-9]/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
+}
+function toEn(str){
+  return String(str).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
+}
+function pad2(n){ return n<10 ? '0'+n : ''+n; }
+
+function jDateToString(j){
+  return toFa(j.jy + '/' + pad2(j.jm) + '/' + pad2(j.jd));
+}
+function jDateToPretty(j){
+  return toFa(j.jd) + ' ' + FA_MONTHS[j.jm-1] + ' ' + toFa(j.jy);
+}
+function parseJDateString(s){
+  s = toEn(s).trim();
+  const m = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+  if(!m) return null;
+  return { jy: +m[1], jm: +m[2], jd: +m[3] };
+}
+function todayJ(){ return Jalaali.toJalaali(new Date()); }
+function jToDate(j){ return Jalaali.toGregorian(j.jy, j.jm, j.jd); }
+function daysBetween(d1, d2){
+  const ms=24*3600*1000;
+  const a=new Date(d1.getFullYear(), d1.getMonth(), d1.getDate()).getTime();
+  const b=new Date(d2.getFullYear(), d2.getMonth(), d2.getDate()).getTime();
+  return Math.round((b-a)/ms);
+}
+function jMonthLength(jy, jm){
+  if(jm<=6) return 31;
+  if(jm<=11) return 30;
+  return Jalaali.isLeap(jy) ? 30 : 29;
+}
+
+/* ---------- IndexedDB Wrapper ---------- */
+const DB_NAME='betonlab_db';
+const DB_VER=2;
+let _db=null;
+
+function openDB(){
+  return new Promise((resolve, reject)=>{
+    if(_db) return resolve(_db);
+    const req = indexedDB.open(DB_NAME, DB_VER);
+    req.onupgradeneeded = (e)=>{
+      const db = e.target.result;
+      if(!db.objectStoreNames.contains('samples')){
+        const s = db.createObjectStore('samples', { keyPath:'id', autoIncrement:true });
+        s.createIndex('planName','planName',{unique:false});
+        s.createIndex('testAge','testAge',{unique:false});
+      }
+      if(!db.objectStoreNames.contains('meta')){
+        db.createObjectStore('meta', { keyPath:'key' });
+      }
+    };
+    req.onsuccess = ()=>{ _db=req.result; resolve(_db); };
+    req.onerror = ()=> reject(req.error);
+  });
+}
+
+/* meta store: stores file handle + sync settings */
+async function metaSet(key, value){
+  const db = await openDB();
+  return new Promise((res,rej)=>{
+    const r = db.transaction('meta','readwrite').objectStore('meta').put({ key, value });
+    r.onsuccess = ()=> res();
+    r.onerror = ()=> rej(r.error);
+  });
+}
+async function metaGet(key){
+  const db = await openDB();
+  return new Promise((res,rej)=>{
+    const r = db.transaction('meta','readonly').objectStore('meta').get(key);
+    r.onsuccess = ()=> res(r.result ? r.result.value : undefined);
+    r.onerror = ()=> rej(r.error);
+  });
+}
+async function metaDel(key){
+  const db = await openDB();
+  return new Promise((res,rej)=>{
+    const r = db.transaction('meta','readwrite').objectStore('meta').delete(key);
+    r.onsuccess = ()=> res();
+    r.onerror = ()=> rej(r.error);
+  });
+}
+function makeUid(){
+  return 'S' + Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+}
+async function dbAdd(item){
+  if(!item.uid) item.uid = makeUid();
+  item.updatedAt = Date.now();
+  const db = await openDB();
+  return new Promise((res,rej)=>{
+    const tx = db.transaction('samples','readwrite');
+    const r = tx.objectStore('samples').add(item);
+    r.onsuccess = ()=> res(r.result);
+    r.onerror = ()=> rej(r.error);
+  });
+}
+async function dbPut(item, touch=true){
+  if(!item.uid) item.uid = makeUid();
+  if(touch) item.updatedAt = Date.now();
+  const db = await openDB();
+  return new Promise((res,rej)=>{
+    const tx = db.transaction('samples','readwrite');
+    const r = tx.objectStore('samples').put(item);
+    r.onsuccess = ()=> res(r.result);
+    r.onerror = ()=> rej(r.error);
+  });
+}
+async function dbGet(id){
+  const db = await openDB();
+  return new Promise((res,rej)=>{
+    const r = db.transaction('samples','readonly').objectStore('samples').get(id);
+    r.onsuccess = ()=> res(r.result);
+    r.onerror = ()=> rej(r.error);
+  });
+}
+async function dbAll(){
+  const db = await openDB();
+  return new Promise((res,rej)=>{
+    const arr=[];
+    const r = db.transaction('samples','readonly').objectStore('samples').openCursor();
+    r.onsuccess = (e)=>{
+      const cur=e.target.result;
+      if(cur){ arr.push(cur.value); cur.continue(); } else res(arr);
+    };
+    r.onerror = ()=> rej(r.error);
+  });
+}
+async function dbDelete(id){
+  const item = await dbGet(id);
+  if(item && item.uid) await addTombstone(item.uid);
+  const db = await openDB();
+  return new Promise((res,rej)=>{
+    const r = db.transaction('samples','readwrite').objectStore('samples').delete(id);
+    r.onsuccess = ()=> res();
+    r.onerror = ()=> rej(r.error);
+  });
+}
+async function addTombstone(uid){
+  const t = (await metaGet('tombstones')) || {};
+  t[uid] = Date.now();
+  await metaSet('tombstones', t);
+}
+async function getTombstones(){ return (await metaGet('tombstones')) || {}; }
+async function dbClear(){
+  const db = await openDB();
+  return new Promise((res,rej)=>{
+    const r = db.transaction('samples','readwrite').objectStore('samples').clear();
+    r.onsuccess = ()=> res();
+    r.onerror = ()=> rej(r.error);
+  });
+}
+
+/* ---------- App State ---------- */
+const state = {
+  view: 'register',
+  editingId: null,
+  samples: [],
+  filters: { plan:'', age:'', status:'' },
+  currentTestSample: null,
+};
+
+/* ---------- UI Utilities ---------- */
+function $(sel, root=document){ return root.querySelector(sel); }
+function $$(sel, root=document){ return Array.from(root.querySelectorAll(sel)); }
+
+function toast(msg, type=''){
+  const wrap = $('#toastWrap');
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(()=>{ el.style.opacity='0'; el.style.transform='translateY(-8px)'; el.style.transition='all .2s'; }, 2200);
+  setTimeout(()=> el.remove(), 2500);
+}
+
+function showModal(html){
+  $('#modalContent').innerHTML = html;
+  $('#modalBackdrop').classList.add('active');
+}
+function hideModal(){ $('#modalBackdrop').classList.remove('active'); }
+$('#modalBackdrop').addEventListener('click', (e)=>{ if(e.target.id==='modalBackdrop') hideModal(); });
+
+function switchView(v){
+  state.view = v;
+  $$('.view').forEach(el => el.classList.remove('active'));
+  $('#view-' + v).classList.add('active');
+  $$('.nav button').forEach(b => b.classList.toggle('active', b.dataset.view===v));
+  window.scrollTo({top:0, behavior:'smooth'});
+  if(v==='list') renderList();
+  if(v==='test') renderTestSelector();
+  if(v==='settings'){ renderStorageInfo(); renderSyncPanel(); }
+}
+
+/* ---------- Jalali Date Picker ---------- */
+function openJDatePicker(currentJ, onSelect){
+  let view = currentJ ? {...currentJ} : todayJ();
+  const today = todayJ();
+
+  function render(){
+    const firstDay = jToDate({jy:view.jy, jm:view.jm, jd:1});
+    // Persian week starts Saturday. JS getDay: 0=Sun. Sat=6 → col 0.
+    // Shift: (getDay + 1) % 7 gives Sat=0, Sun=1, Mon=2, ..., Fri=6
+    const startCol = (firstDay.getDay() + 1) % 7;
+    const monthLen = jMonthLength(view.jy, view.jm);
+    let cells = '';
+    // previous month fillers
+    let prev = { jy: view.jy, jm: view.jm - 1 };
+    if(prev.jm < 1){ prev.jm = 12; prev.jy -= 1; }
+    const prevLen = jMonthLength(prev.jy, prev.jm);
+    for(let i=startCol-1; i>=0; i--){
+      const d = prevLen - i;
+      cells += `<div class="jdp-day other" data-jy="${prev.jy}" data-jm="${prev.jm}" data-jd="${d}">${toFa(d)}</div>`;
+    }
+    for(let d=1; d<=monthLen; d++){
+      const isToday = today.jy===view.jy && today.jm===view.jm && today.jd===d;
+      const isSel = currentJ && currentJ.jy===view.jy && currentJ.jm===view.jm && currentJ.jd===d;
+      const cls = ['jdp-day'];
+      if(isToday) cls.push('today');
+      if(isSel) cls.push('selected');
+      cells += `<div class="${cls.join(' ')}" data-jy="${view.jy}" data-jm="${view.jm}" data-jd="${d}">${toFa(d)}</div>`;
+    }
+    const totalCells = startCol + monthLen;
+    const remaining = (7 - (totalCells % 7)) % 7;
+    let nxt = { jy: view.jy, jm: view.jm + 1 };
+    if(nxt.jm > 12){ nxt.jm = 1; nxt.jy += 1; }
+    for(let d=1; d<=remaining; d++){
+      cells += `<div class="jdp-day other" data-jy="${nxt.jy}" data-jm="${nxt.jm}" data-jd="${d}">${toFa(d)}</div>`;
+    }
+
+    const html = `
+      <h3 class="modal-title">انتخاب تاریخ</h3>
+      <div class="jdp">
+        <div class="jdp-head">
+          <button type="button" id="jdpPrev" aria-label="ماه قبل">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+          <div class="lbl">${FA_MONTHS[view.jm-1]} ${toFa(view.jy)}</div>
+          <button type="button" id="jdpNext" aria-label="ماه بعد">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+        </div>
+        <div class="jdp-weeks">${FA_WEEKDAYS_SHORT.map(w=>`<div>${w}</div>`).join('')}</div>
+        <div class="jdp-days" id="jdpDays">${cells}</div>
+      </div>
+      <div class="btn-row" style="margin-top:14px">
+        <button class="btn btn-outline btn-block" type="button" id="jdpToday">امروز</button>
+        <button class="btn btn-outline btn-block" type="button" id="jdpCancel">انصراف</button>
+      </div>
+    `;
+    showModal(html);
+
+    $('#jdpPrev').onclick = ()=>{ view.jm--; if(view.jm<1){ view.jm=12; view.jy--; } render(); };
+    $('#jdpNext').onclick = ()=>{ view.jm++; if(view.jm>12){ view.jm=1; view.jy++; } render(); };
+    $('#jdpToday').onclick = ()=>{ onSelect(todayJ()); hideModal(); };
+    $('#jdpCancel').onclick = ()=> hideModal();
+    $$('#jdpDays .jdp-day').forEach(el=>{
+      el.onclick = ()=>{
+        onSelect({ jy:+el.dataset.jy, jm:+el.dataset.jm, jd:+el.dataset.jd });
+        hideModal();
+      };
+    });
+  }
+  render();
+}
+
+/* ---------- Strength calculations (compression / flexure / tension) ---------- */
+const TEST_KIND_LABEL = {
+  compression: 'فشاری',
+  flexure: 'خمشی',
+  tension: 'کششی',
+};
+const TEST_KIND_HINT = {
+  compression: 'مقاومت فشاری: σ = F / A',
+  flexure: 'مقاومت خمشی (مدول گسیختگی): fr = P L / (b d²)  —  سه یا چهار نقطه‌ای',
+  tension: 'مقاومت کششی دونیم‌شدن: ft = 2P / (π D L)  —  استوانه / مکعب',
+};
+
+function forceToN(force, unit){
+  if(unit === 'kgf') return force * 9.80665;
+  if(unit === 'kN') return force * 1000;
+  return force;
+}
+function unitLabel(unit){
+  return unit === 'kgf' ? 'kgf' : (unit === 'kN' ? 'kN' : 'N');
+}
+
+function calcStrength(sample, force, unit, kind, extras){
+  kind = kind || 'compression';
+  extras = extras || {};
+  const N = forceToN(force, unit);
+  if(!(N > 0)) return { mpa: 0, area: 0, formula: '', detail: '' };
+
+  if(kind === 'flexure'){
+    let b, d, L;
+    if(sample.moldType === 'cube'){
+      b = sample.dims.width;
+      d = sample.dims.height;
+    } else {
+      b = sample.dims.diameter;
+      d = sample.dims.diameter;
+    }
+    L = extras.span > 0 ? extras.span : (d * 3);
+    if(!(b > 0 && d > 0 && L > 0)) return { mpa: 0, area: b*d, formula: '', detail: '' };
+    // Three-point: fr = 3PL / (2bd²)
+    // Four-point (third-point): fr = PL / (bd²)
+    const setup = extras.flexSetup === 'third4' ? 'third4' : 'third';
+    const mpa = setup === 'third4'
+      ? (N * L) / (b * d * d)
+      : (3 * N * L) / (2 * b * d * d);
+    const formula = setup === 'third4' ? 'fr = P L / (b d²)' : 'fr = 3 P L / (2 b d²)';
+    return {
+      mpa, area: b * d, span: L, setup, b, d,
+      formula,
+      detail: `b=${b.toFixed(1)} mm • d=${d.toFixed(1)} mm • L=${L.toFixed(1)} mm • ${formula}`,
+    };
+  }
+
+  if(kind === 'tension'){
+    // Splitting tensile (Brazilian): ft = 2P / (π D L)
+    let D, L;
+    if(sample.moldType === 'cylinder'){
+      D = sample.dims.diameter;
+      L = sample.dims.height;
+    } else {
+      D = sample.dims.width;
+      L = sample.dims.height;
+    }
+    if(!(D > 0 && L > 0)) return { mpa: 0, area: 0, formula: '', detail: '' };
+    const mpa = (2 * N) / (Math.PI * D * L);
+    return {
+      mpa, area: Math.PI * (D/2) * (D/2), D, L,
+      formula: 'ft = 2P / (π D L)',
+      detail: `D=${D.toFixed(1)} mm • L=${L.toFixed(1)} mm • ft = 2P / (π D L)`,
+    };
+  }
+
+  // compression
+  let area = 0;
+  if(sample.moldType === 'cube'){
+    area = sample.dims.length * sample.dims.width;
+  } else {
+    const d = sample.dims.diameter;
+    area = Math.PI * (d/2) * (d/2);
+  }
+  if(area <= 0) return { mpa: 0, area: 0, formula: '', detail: '' };
+  return {
+    mpa: N / area, area,
+    formula: 'σ = F / A',
+    detail: `مساحت مقطع: ${area.toFixed(1)} mm² • σ = F / A`,
+  };
+}
+
+function getSampleTests(s){
+  const list = [];
+  if(s.testResult){
+    const kind = s.testResult.kind || 'compression';
+    list.push({ kind, ...s.testResult });
+  }
+  if(Array.isArray(s.tests)){
+    s.tests.forEach(t => {
+      if(!t) return;
+      if(s.testResult && (t.kind || 'compression') === (s.testResult.kind || 'compression')
+         && t.savedAt === s.testResult.savedAt) return;
+      list.push({ kind: t.kind || 'compression', ...t });
+    });
+  }
+  const seen = new Set();
+  return list.filter(t => {
+    const k = t.kind || 'compression';
+    if(seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+}
+function getTestOfKind(s, kind){
+  return getSampleTests(s).find(t => (t.kind || 'compression') === kind) || null;
+}
+
+/* ---------- Sample status ---------- */
+function computeStatus(sample){
+  const buildDate = jToDate(sample.buildDate);
+  const now = new Date();
+  const daysPassed = daysBetween(buildDate, now);
+  const daysRemaining = sample.testAge - daysPassed;
+  let status;
+  if(getSampleTests(sample).length) status = 'done';
+  else if(daysRemaining <= 0) status = 'ready';
+  else status = 'wait';
+  return { daysPassed, daysRemaining, status };
+}
+const STATUS_LABEL = { wait:'در انتظار تست', ready:'آماده تست', done:'تست انجام شده' };
+const STATUS_CLASS = { wait:'badge-wait', ready:'badge-ready', done:'badge-done' };
+
+/* ---------- Form: Register / Edit ---------- */
+function resetForm(){
+  state.editingId = null;
+  $('#f-planName').value = '';
+  $('#f-sampleName').value = '';
+  $('#f-totalCount').value = 3;
+  $('#f-sampleNo').value = 1;
+  $('#f-testAge').value = 7;
+  $('#f-testAgeCustom').value = '';
+  $$('#ageSeg button').forEach(b => b.classList.toggle('active', b.dataset.age === '7'));
+  const today = todayJ();
+  setBuildDate(today);
+  $('#f-moldType').value = 'cube';
+  $$('#moldSeg button').forEach(b => b.classList.toggle('active', b.dataset.mold === 'cube'));
+  toggleMoldDims('cube');
+  $('#f-length').value = 150;
+  $('#f-width').value = 150;
+  $('#f-height').value = 150;
+  $('#f-diameter').value = 150;
+  $('#f-cylHeight').value = 300;
+  $('#f-notes').value = '';
+  $('#saveSampleBtn').innerHTML = `
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+    ذخیره نمونه`;
+}
+function setBuildDate(j){
+  const el = $('#f-buildDate');
+  el.value = jDateToPretty(j);
+  el.dataset.jy = j.jy;
+  el.dataset.jm = j.jm;
+  el.dataset.jd = j.jd;
+}
+function getBuildDate(){
+  const el = $('#f-buildDate');
+  if(!el.dataset.jy) return null;
+  return { jy:+el.dataset.jy, jm:+el.dataset.jm, jd:+el.dataset.jd };
+}
+function toggleMoldDims(mold){
+  $('#cubeDims').style.display = mold==='cube' ? 'grid' : 'none';
+  $('#cylDims').style.display = mold==='cylinder' ? 'grid' : 'none';
+}
+
+$$('#ageSeg button').forEach(b => b.addEventListener('click', ()=>{
+  $$('#ageSeg button').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  $('#f-testAge').value = b.dataset.age;
+  $('#f-testAgeCustom').value = '';
+}));
+$('#f-testAgeCustom').addEventListener('input', (e)=>{
+  const v = toEn(e.target.value);
+  if(v){
+    $('#f-testAge').value = v;
+    $$('#ageSeg button').forEach(x=>x.classList.remove('active'));
+  }
+});
+$$('#moldSeg button').forEach(b => b.addEventListener('click', ()=>{
+  $$('#moldSeg button').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  $('#f-moldType').value = b.dataset.mold;
+  toggleMoldDims(b.dataset.mold);
+}));
+$('#f-buildDate').addEventListener('click', ()=>{
+  openJDatePicker(getBuildDate(), (j)=> setBuildDate(j));
+});
+$('#resetFormBtn').addEventListener('click', ()=>{
+  resetForm();
+  toast('فرم پاک شد');
+});
+
+$('#sampleForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const planName = $('#f-planName').value.trim();
+  const sampleName = $('#f-sampleName').value.trim();
+  const totalCount = +toEn($('#f-totalCount').value);
+  const sampleNo = +toEn($('#f-sampleNo').value);
+  const testAge = +toEn($('#f-testAge').value);
+  const buildDate = getBuildDate();
+  const moldType = $('#f-moldType').value;
+  const notes = $('#f-notes').value.trim();
+
+  if(!planName){ toast('نام طرح را وارد کنید','error'); return; }
+  if(!sampleName){ toast('نام نمونه را وارد کنید','error'); return; }
+  if(!(totalCount>=1) || !(sampleNo>=1)){ toast('تعداد نمونه‌ها معتبر نیست','error'); return; }
+  if(sampleNo > totalCount){ toast('شماره نمونه از تعداد کل بیشتر است','error'); return; }
+  if(!(testAge>=1)){ toast('سن تست معتبر نیست','error'); return; }
+  if(!buildDate){ toast('تاریخ ساخت را انتخاب کنید','error'); return; }
+
+  let dims;
+  if(moldType === 'cube'){
+    const L=+toEn($('#f-length').value), W=+toEn($('#f-width').value), H=+toEn($('#f-height').value);
+    if(!(L>0&&W>0&&H>0)){ toast('ابعاد قالب باید مثبت باشد','error'); return; }
+    dims = { length:L, width:W, height:H };
+  } else {
+    const D=+toEn($('#f-diameter').value), H=+toEn($('#f-cylHeight').value);
+    if(!(D>0&&H>0)){ toast('ابعاد قالب باید مثبت باشد','error'); return; }
+    dims = { diameter:D, height:H };
+  }
+
+  const item = {
+    planName, sampleName, totalCount, sampleNo, testAge,
+    buildDate, moldType, dims, notes,
+    createdAt: Date.now(),
+  };
+
+  if(state.editingId != null){
+    const existing = await dbGet(state.editingId);
+    if(existing){
+      Object.assign(existing, item);
+      await dbPut(existing);
+      toast('نمونه بروزرسانی شد','success');
+    }
+  } else {
+    await dbAdd(item);
+    toast('نمونه ذخیره شد','success');
+  }
+  resetForm();
+  await loadSamples();
+  scheduleAutoSync();
+  switchView('list');
+});
+
+/* ---------- Load / Render Samples ---------- */
+async function loadSamples(){
+  state.samples = await dbAll();
+  // Sort: ready first, then wait, then done. Within each, by test date ascending.
+  state.samples.sort((a,b)=>{
+    const sa = computeStatus(a).status, sb = computeStatus(b).status;
+    const rank = { ready:0, wait:1, done:2 };
+    if(rank[sa]!==rank[sb]) return rank[sa]-rank[sb];
+    return b.createdAt - a.createdAt;
+  });
+  populatePlanFilter();
+}
+function populatePlanFilter(){
+  const sel = $('#filterPlan');
+  const cur = sel.value;
+  const plans = Array.from(new Set(state.samples.map(s => s.planName))).sort();
+  sel.innerHTML = '<option value="">همه طرح‌ها</option>' +
+    plans.map(p => `<option value="${escapeAttr(p)}">${escapeHtml(p)}</option>`).join('');
+  sel.value = cur;
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function escapeAttr(s){ return escapeHtml(s); }
+
+function renderStats(list){
+  const total = list.length;
+  const ready = list.filter(s => computeStatus(s).status==='ready').length;
+  const wait = list.filter(s => computeStatus(s).status==='wait').length;
+  const done = list.filter(s => computeStatus(s).status==='done').length;
+  $('#statsBar').innerHTML = `
+    <div class="stat"><div class="n">${toFa(total)}</div><div class="l">همه</div></div>
+    <div class="stat warn"><div class="n">${toFa(wait)}</div><div class="l">در انتظار</div></div>
+    <div class="stat accent"><div class="n">${toFa(ready)}</div><div class="l">آماده تست</div></div>
+    <div class="stat success"><div class="n">${toFa(done)}</div><div class="l">تست شده</div></div>
+  `;
+}
+
+function renderList(){
+  const {plan, age, status} = state.filters;
+  let list = state.samples.slice();
+  if(plan) list = list.filter(s => s.planName === plan);
+  if(age) list = list.filter(s => s.testAge === +age);
+  if(status) list = list.filter(s => computeStatus(s).status === status);
+
+  renderStats(state.samples);
+
+  const wrap = $('#samplesList');
+  if(list.length === 0){
+    wrap.innerHTML = `
+      <div class="empty">
+        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="9" y1="4" x2="9" y2="20"/></svg>
+        <div class="title">نمونه‌ای برای نمایش نیست</div>
+        <div>از تب «نمونه جدید» شروع کنید</div>
+      </div>`;
+    return;
+  }
+
+  wrap.innerHTML = list.map(s => renderSampleCard(s)).join('');
+  $$('#samplesList [data-act]').forEach(btn=>{
+    btn.addEventListener('click', ()=> handleSampleAction(btn.dataset.act, +btn.dataset.id));
+  });
+}
+
+function renderSampleCard(s){
+  const st = computeStatus(s);
+  const buildStr = jDateToPretty(s.buildDate);
+  const dimsStr = s.moldType==='cube'
+    ? `${toFa(s.dims.length)}×${toFa(s.dims.width)}×${toFa(s.dims.height)} mm`
+    : `⌀${toFa(s.dims.diameter)} × ${toFa(s.dims.height)} mm`;
+  let remainingStr;
+  if(st.status==='done'){
+    remainingStr = `تست انجام شده`;
+  } else if(st.daysRemaining > 0){
+    remainingStr = `${toFa(st.daysRemaining)} روز مانده تا ${toFa(s.testAge)} روزه شدن`;
+  } else if(st.daysRemaining === 0){
+    remainingStr = `امروز آماده تست است`;
+  } else {
+    remainingStr = `${toFa(Math.abs(st.daysRemaining))} روز از سن تست گذشته`;
+  }
+
+  const allTests = getSampleTests(s);
+  const resultBlock = allTests.length ? allTests.map(tr => `
+    <div class="result-box" style="margin-top:8px">
+      <div class="row-between">
+        <div>
+          <div class="k">مقاومت ${TEST_KIND_LABEL[tr.kind || 'compression']}</div>
+          <div><span class="v">${toFa((tr.mpa||0).toFixed(2))}</span><span class="u">MPa</span></div>
+        </div>
+        <div class="muted" style="text-align:left">
+          نیرو: ${toFa(tr.force)} ${unitLabel(tr.unit)}<br/>
+          تاریخ تست: ${jDateToString(tr.testDate)}
+        </div>
+      </div>
+    </div>`).join('') : '';
+
+  return `
+    <div class="sample">
+      <div class="sample-head">
+        <div>
+          <div class="sample-title">${escapeHtml(s.planName)} — ${escapeHtml(s.sampleName || 'بدون نام')}</div>
+          <div class="sample-sub">نمونه ${toFa(s.sampleNo)} از ${toFa(s.totalCount)} • ${remainingStr}</div>
+        </div>
+        <span class="badge ${STATUS_CLASS[st.status]}">${STATUS_LABEL[st.status]}</span>
+      </div>
+      <div class="sample-body">
+        <div><div class="k">تاریخ ساخت</div><div class="v">${buildStr}</div></div>
+        <div><div class="k">سن تست</div><div class="v">${toFa(s.testAge)} روزه</div></div>
+        <div><div class="k">قالب</div><div class="v">${s.moldType==='cube'?'مکعبی':'استوانه‌ای'}</div></div>
+        <div><div class="k">ابعاد</div><div class="v">${dimsStr}</div></div>
+        <div><div class="k">روزهای گذشته</div><div class="v">${toFa(st.daysPassed)} روز</div></div>
+        <div><div class="k">شناسه</div><div class="v">#${toFa(s.id)}</div></div>
+        ${s.notes ? `<div style="grid-column:1/-1"><div class="k">یادداشت</div><div class="v" style="font-weight:400">${escapeHtml(s.notes)}</div></div>`:''}
+      </div>
+      ${resultBlock}
+      <div class="sample-actions" style="margin-top:10px">
+        <button class="btn btn-accent btn-sm" data-act="test" data-id="${s.id}">ثبت / تکمیل تست</button>
+        ${allTests.length ? `<button class="btn btn-outline btn-sm" data-act="untest" data-id="${s.id}">حذف نتایج</button>` : ''}
+        <button class="btn btn-outline btn-sm" data-act="edit" data-id="${s.id}">ویرایش</button>
+        <button class="btn btn-danger btn-sm" data-act="delete" data-id="${s.id}">حذف</button>
+      </div>
+    </div>`;
+}
+
+async function handleSampleAction(act, id){
+  const s = await dbGet(id);
+  if(!s) return;
+  if(act === 'delete'){
+    if(confirm(`نمونه «${s.planName} — شماره ${s.sampleNo}» حذف شود؟`)){
+      await dbDelete(id);
+      toast('حذف شد','success');
+      await loadSamples();
+      renderList();
+      scheduleAutoSync();
+    }
+  } else if(act === 'edit'){
+    fillFormForEdit(s);
+    switchView('register');
+  } else if(act === 'test'){
+    state.currentTestSample = s;
+    switchView('test');
+    // Pre-select in dropdown
+    setTimeout(()=>{ $('#t-sample').value = String(id); onTestSampleChange(); }, 50);
+  } else if(act === 'untest'){
+    if(confirm('همه نتایج تست این نمونه حذف شود؟')){
+      delete s.testResult;
+      delete s.tests;
+      await dbPut(s);
+      toast('نتایج تست حذف شد','success');
+      await loadSamples();
+      renderList();
+      scheduleAutoSync();
+    }
+  }
+}
+
+function fillFormForEdit(s){
+  state.editingId = s.id;
+  $('#f-planName').value = s.planName;
+  $('#f-sampleName').value = s.sampleName || '';
+  $('#f-totalCount').value = s.totalCount;
+  $('#f-sampleNo').value = s.sampleNo;
+  $('#f-testAge').value = s.testAge;
+  const preset = ['3','7','14','28','42','90'].includes(String(s.testAge));
+  $$('#ageSeg button').forEach(b => b.classList.toggle('active', preset && b.dataset.age===String(s.testAge)));
+  $('#f-testAgeCustom').value = preset ? '' : s.testAge;
+  setBuildDate(s.buildDate);
+  $('#f-moldType').value = s.moldType;
+  $$('#moldSeg button').forEach(b => b.classList.toggle('active', b.dataset.mold===s.moldType));
+  toggleMoldDims(s.moldType);
+  if(s.moldType === 'cube'){
+    $('#f-length').value = s.dims.length;
+    $('#f-width').value = s.dims.width;
+    $('#f-height').value = s.dims.height;
+  } else {
+    $('#f-diameter').value = s.dims.diameter;
+    $('#f-cylHeight').value = s.dims.height;
+  }
+  $('#f-notes').value = s.notes || '';
+  $('#saveSampleBtn').innerHTML = `
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+    بروزرسانی نمونه`;
+  toast('در حالت ویرایش');
+}
+
+/* ---------- Filters ---------- */
+$('#filterPlan').addEventListener('change', (e)=>{ state.filters.plan = e.target.value; renderList(); });
+$('#filterAge').addEventListener('change', (e)=>{ state.filters.age = e.target.value; renderList(); });
+$('#filterStatus').addEventListener('change', (e)=>{ state.filters.status = e.target.value; renderList(); });
+
+/* ---------- Test view ---------- */
+function getCurrentTestKind(){ return $('#t-kind') ? $('#t-kind').value : 'compression'; }
+
+function applyTestKindUI(kind){
+  $('#t-kind').value = kind;
+  $$('#testKindSeg button').forEach(b => b.classList.toggle('active', b.dataset.kind === kind));
+  const flex = $('#flexureExtras');
+  if(flex) flex.style.display = kind === 'flexure' ? 'block' : 'none';
+  const hint = $('#testKindHint');
+  if(hint) hint.textContent = TEST_KIND_HINT[kind] || '';
+  const lab = $('#strengthLabel');
+  if(lab) lab.textContent = 'مقاومت ' + TEST_KIND_LABEL[kind] + ' محاسبه‌شده';
+  fillForceFromExisting();
+  updateStrengthDisplay();
+}
+
+function fillForceFromExisting(){
+  const s = state.currentTestSample;
+  const kind = getCurrentTestKind();
+  const prev = s ? getTestOfKind(s, kind) : null;
+  if(prev){
+    $('#t-force').value = prev.force;
+    $('#t-unit').value = prev.unit || 'N';
+    if(prev.testDate) setTestDate(prev.testDate);
+    if(kind === 'flexure'){
+      if(prev.span) $('#t-span').value = prev.span;
+      if(prev.setup) $('#t-flexSetup').value = prev.setup;
+    }
+  } else {
+    $('#t-force').value = '';
+  }
+}
+
+function renderTestSelector(){
+  const sel = $('#t-sample');
+  const list = state.samples.slice().sort((a,b)=>{
+    const sa=computeStatus(a), sb=computeStatus(b);
+    const rank = { ready:0, wait:1, done:2 };
+    if(rank[sa.status]!==rank[sb.status]) return rank[sa.status]-rank[sb.status];
+    return sa.daysRemaining - sb.daysRemaining;
+  });
+  sel.innerHTML = '<option value="">— انتخاب کنید —</option>' + list.map(s=>{
+    const st = computeStatus(s);
+    const kinds = getSampleTests(s).map(t => TEST_KIND_LABEL[t.kind || 'compression']).join('، ');
+    const done = kinds
+      ? ` [${kinds}]`
+      : (st.status==='ready' ? ' [آماده]' : ` [${toFa(st.daysRemaining)} روز مانده]`);
+    return `<option value="${s.id}">${escapeHtml(s.planName)} - ${escapeHtml(s.sampleName || 'نمونه '+s.sampleNo)} (${toFa(s.testAge)}روزه)${done}</option>`;
+  }).join('');
+  if(!$('#t-testDate').dataset.jy){
+    setTestDate(todayJ());
+  }
+  applyTestKindUI(getCurrentTestKind());
+}
+function setTestDate(j){
+  const el = $('#t-testDate');
+  el.value = jDateToPretty(j);
+  el.dataset.jy = j.jy; el.dataset.jm = j.jm; el.dataset.jd = j.jd;
+}
+function getTestDate(){
+  const el = $('#t-testDate');
+  if(!el.dataset.jy) return todayJ();
+  return { jy:+el.dataset.jy, jm:+el.dataset.jm, jd:+el.dataset.jd };
+}
+$('#t-testDate').addEventListener('click', ()=>{
+  openJDatePicker(getTestDate(), (j)=>{ setTestDate(j); });
+});
+
+$$('#testKindSeg button').forEach(b => b.addEventListener('click', ()=>{
+  applyTestKindUI(b.dataset.kind);
+}));
+$('#t-span').addEventListener('input', updateStrengthDisplay);
+$('#t-flexSetup').addEventListener('change', updateStrengthDisplay);
+
+async function onTestSampleChange(){
+  const id = +$('#t-sample').value;
+  const info = $('#testSampleInfo');
+  if(!id){ info.style.display='none'; state.currentTestSample = null; updateStrengthDisplay(); return; }
+  const s = await dbGet(id);
+  state.currentTestSample = s;
+  const st = computeStatus(s);
+  const dimsStr = s.moldType==='cube'
+    ? `${toFa(s.dims.length)}×${toFa(s.dims.width)}×${toFa(s.dims.height)} mm`
+    : `⌀${toFa(s.dims.diameter)} × ${toFa(s.dims.height)} mm`;
+  const tests = getSampleTests(s);
+  const testsLine = tests.length
+    ? tests.map(t => `${TEST_KIND_LABEL[t.kind||'compression']}: ${toFa((t.mpa||0).toFixed(2))} MPa`).join('  •  ')
+    : 'هنوز نتیجه‌ای ثبت نشده';
+  info.style.display = 'block';
+  info.innerHTML = `
+    <div class="card" style="background:var(--surface-2);margin-bottom:14px">
+      <div class="row-between" style="margin-bottom:8px">
+        <strong style="color:var(--primary)">${escapeHtml(s.planName)} — ${escapeHtml(s.sampleName || 'بدون نام')} (نمونه ${toFa(s.sampleNo)})</strong>
+        <span class="badge ${STATUS_CLASS[st.status]}">${STATUS_LABEL[st.status]}</span>
+      </div>
+      <div class="muted">
+        قالب ${s.moldType==='cube'?'مکعبی':'استوانه‌ای'} • ${dimsStr}<br/>
+        ساخت: ${jDateToString(s.buildDate)} • سن تست: ${toFa(s.testAge)} روز • گذشته: ${toFa(st.daysPassed)} روز<br/>
+        ${testsLine}
+      </div>
+    </div>
+  `;
+  if(s.moldType === 'cube' && !$('#t-span').value){
+    $('#t-span').value = Math.round((s.dims.height || 150) * 3);
+  } else if(s.moldType === 'cylinder' && !$('#t-span').value){
+    $('#t-span').value = Math.round((s.dims.diameter || 150) * 3);
+  }
+  fillForceFromExisting();
+  updateStrengthDisplay();
+}
+$('#t-sample').addEventListener('change', onTestSampleChange);
+$('#t-force').addEventListener('input', updateStrengthDisplay);
+$('#t-unit').addEventListener('change', updateStrengthDisplay);
+
+function updateStrengthDisplay(){
+  const s = state.currentTestSample;
+  const force = parseFloat(toEn($('#t-force').value));
+  const unit = $('#t-unit').value;
+  const kind = getCurrentTestKind();
+  const box = $('#strengthVal');
+  const detail = $('#strengthDetail');
+  if(!s || !(force > 0)){
+    box.textContent = '—';
+    detail.textContent = 'نیرو و نمونه را انتخاب کنید';
+    return;
+  }
+  const extras = {
+    span: parseFloat(toEn($('#t-span').value)) || 0,
+    flexSetup: $('#t-flexSetup').value,
+  };
+  const r = calcStrength(s, force, unit, kind, extras);
+  box.textContent = toFa(r.mpa.toFixed(2));
+  const N = forceToN(force, unit);
+  detail.innerHTML = `${r.detail || ''} • نیرو: ${toFa(N.toFixed(1))} N`;
+}
+
+$('#saveTestBtn').addEventListener('click', async ()=>{
+  const s = state.currentTestSample;
+  if(!s){ toast('نمونه‌ای انتخاب نشده','error'); return; }
+  const force = parseFloat(toEn($('#t-force').value));
+  const unit = $('#t-unit').value;
+  const kind = getCurrentTestKind();
+  if(!(force > 0)){ toast('نیروی شکست معتبر نیست','error'); return; }
+  const testDate = getTestDate();
+  const extras = {
+    span: parseFloat(toEn($('#t-span').value)) || 0,
+    flexSetup: $('#t-flexSetup').value,
+  };
+  const r = calcStrength(s, force, unit, kind, extras);
+  const rec = {
+    kind, force, unit, testDate,
+    mpa: r.mpa,
+    area: r.area,
+    formula: r.formula,
+    span: r.span || extras.span || undefined,
+    setup: r.setup || extras.flexSetup || undefined,
+    savedAt: Date.now(),
+  };
+  if(!Array.isArray(s.tests)) s.tests = [];
+  const idx = s.tests.findIndex(t => (t.kind || 'compression') === kind);
+  if(idx >= 0) s.tests[idx] = rec; else s.tests.push(rec);
+  s.testResult = rec; // آخرین نتیجه ثبت‌شده (سازگاری با نسخه‌های قبلی)
+  await dbPut(s);
+  toast('نتیجه تست ' + TEST_KIND_LABEL[kind] + ' ذخیره شد','success');
+  await loadSamples();
+  scheduleAutoSync();
+  switchView('list');
+});
+
+/* ---------- Export / Import TXT ---------- */
+function buildTxt(samples){
+  const lines = [];
+  lines.push('═══════════════════════════════════════════════');
+  lines.push('           گزارش نمونه‌های بتن — بتن‌لب');
+  lines.push('              Developed by MOSTAFA AZIZI');
+  lines.push('═══════════════════════════════════════════════');
+  lines.push('تاریخ خروجی: ' + jDateToPretty(todayJ()));
+  lines.push('تعداد نمونه‌ها: ' + samples.length);
+  lines.push('');
+  samples.forEach((s, i) => {
+    const st = computeStatus(s);
+    lines.push('───────────────────────────────────────────────');
+    lines.push(`نمونه ${i+1}  |  شناسه: #${s.id}`);
+    lines.push('───────────────────────────────────────────────');
+    lines.push('نام طرح:        ' + s.planName);
+    lines.push('نام نمونه:      ' + (s.sampleName || '—'));
+    lines.push('شماره نمونه:    ' + s.sampleNo + ' از ' + s.totalCount);
+    lines.push('تاریخ ساخت:    ' + jDateToString(s.buildDate));
+    lines.push('سن تست:         ' + s.testAge + ' روز');
+    lines.push('نوع قالب:       ' + (s.moldType==='cube' ? 'مکعبی' : 'استوانه‌ای'));
+    if(s.moldType === 'cube'){
+      lines.push('ابعاد (mm):     ' + `${s.dims.length} × ${s.dims.width} × ${s.dims.height}`);
+    } else {
+      lines.push('ابعاد (mm):     ' + `قطر=${s.dims.diameter}، ارتفاع=${s.dims.height}`);
+    }
+    lines.push('روزهای گذشته: ' + st.daysPassed);
+    lines.push('وضعیت:          ' + STATUS_LABEL[st.status]);
+    if(s.notes) lines.push('یادداشت:       ' + s.notes);
+    const tests = getSampleTests(s);
+    if(tests.length){
+      tests.forEach(tr => {
+        const k = tr.kind || 'compression';
+        lines.push('');
+        lines.push('  ── نتیجه تست ' + TEST_KIND_LABEL[k] + ' ──');
+        lines.push('  تاریخ تست:      ' + jDateToString(tr.testDate));
+        lines.push('  نیروی شکست:   ' + tr.force + ' ' + unitLabel(tr.unit));
+        if(tr.area) lines.push('  مساحت مقطع:   ' + Number(tr.area).toFixed(2) + ' mm²');
+        if(tr.span) lines.push('  دهانه بارگذاری: ' + tr.span + ' mm');
+        if(tr.formula) lines.push('  فرمول:         ' + tr.formula);
+        lines.push('  مقاومت ' + TEST_KIND_LABEL[k] + ': ' + Number(tr.mpa).toFixed(2) + ' MPa');
+      });
+    }
+    lines.push('');
+  });
+  lines.push('═══════════════════════════════════════════════');
+  lines.push('── DATA ── (برای بازیابی، این بخش را دست‌نخورده بگذارید)');
+  lines.push('##BETONLAB_JSON##');
+  lines.push(JSON.stringify(samples));
+  lines.push('##END##');
+  return lines.join('\n');
+}
+
+/* ---------- PDF Report Generator ---------- */
+async function generatePDFReport(samples) {
+  const t = todayJ();
+  const dateStr = jDateToPretty(t);
+  const total = samples.length;
+  const done = samples.filter(s => getSampleTests(s).length > 0).length;
+  const plans = new Set(samples.map(s => s.planName)).size;
+
+  let rowsHtml = '';
+  samples.forEach((s, idx) => {
+    const st = computeStatus(s);
+    const buildStr = jDateToPretty(s.buildDate);
+    const dimsStr = s.moldType === 'cube'
+      ? `${toFa(s.dims.length)}×${toFa(s.dims.width)}×${toFa(s.dims.height)} mm`
+      : `⌀${toFa(s.dims.diameter)} × ${toFa(s.dims.height)} mm`;
+
+    let resultHtml = '';
+    const pdfTests = getSampleTests(s);
+    if (pdfTests.length) {
+      resultHtml = pdfTests.map(tr => `
+        <div class="pdf-result">
+          <div style="font-size: 11px; color: #475569; margin-bottom: 4px;">نتیجه آزمایش ${TEST_KIND_LABEL[tr.kind || 'compression']}:</div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <span style="font-size: 18px; font-weight: 700; color: #16a34a;">${toFa(Number(tr.mpa).toFixed(2))}</span>
+              <span style="font-size: 11px; color: #64748b; font-weight: 600;">MPa</span>
+            </div>
+            <div style="font-size: 11px; color: #475569; text-align: left; line-height: 1.4;">
+              نیرو: ${toFa(tr.force)} ${unitLabel(tr.unit)}<br/>
+              تاریخ تست: ${jDateToString(tr.testDate)}
+            </div>
+          </div>
+        </div>
+      `).join('');
+    } else {
+      resultHtml = `
+        <div class="pdf-result pending">
+          <div style="font-size: 12px; font-weight: 600; color: ${st.status === 'ready' ? '#f97316' : '#d97706'}">
+            ${st.status === 'ready' ? '⚠️ آماده آزمایش' : '🕒 در انتظار رسیدن به سن تست'}
+          </div>
+          <div style="font-size: 11px; color: #64748b; margin-top: 3px;">
+            ${st.daysRemaining > 0 ? `${toFa(st.daysRemaining)} روز مانده تا سن تست` : 'زمان تست فرارسیده است'}
+          </div>
+        </div>
+      `;
+    }
+
+    rowsHtml += `
+      <div class="pdf-card">
+        <div class="pdf-card-head">
+          <div class="pdf-card-title">${escapeHtml(s.planName)} — ${escapeHtml(s.sampleName || 'بدون نام')}</div>
+          <div class="pdf-badge ${st.status}">${STATUS_LABEL[st.status]}</div>
+        </div>
+        <div class="pdf-card-grid">
+          <div><span class="lbl">شناسه نمونه:</span> <span class="val">#${toFa(s.id)}</span></div>
+          <div><span class="lbl">سن تست:</span> <span class="val">${toFa(s.testAge)} روزه</span></div>
+          <div><span class="lbl">تاریخ ساخت:</span> <span class="val">${buildStr}</span></div>
+          <div><span class="lbl">نوع قالب:</span> <span class="val">${s.moldType === 'cube' ? 'مکعبی' : 'استوانه‌ای'}</span></div>
+          <div><span class="lbl">ابعاد قالب:</span> <span class="val">${dimsStr}</span></div>
+          <div><span class="lbl">تعداد:</span> <span class="val">نمونه ${toFa(s.sampleNo)} از ${toFa(s.totalCount)}</span></div>
+        </div>
+        ${s.notes ? `<div style="margin-top: 8px; font-size: 11px; color: #475569; background: #f8fafc; padding: 6px; border-radius: 4px; border-right: 2px solid #cbd5e1;"><b>یادداشت:</b> ${escapeHtml(s.notes)}</div>` : ''}
+        ${resultHtml}
+      </div>
+    `;
+  });
+
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    toast('خطا در باز کردن پنجره چاپ. مرورگر را بررسی کنید.', 'error');
+    return;
+  }
+
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html lang="fa" dir="rtl">
+    <head>
+      <meta charset="UTF-8">
+      <title>گزارش آزمایشگاهی مقاومت فشاری بتن</title>
+      <link rel="stylesheet" href="${new URL('fonts/vazirmatn.css', location.href).href}">
+      <style>
+        body {
+          font-family: 'Vazirmatn', sans-serif;
+          background: #ffffff;
+          color: #0f172a;
+          margin: 0;
+          padding: 20px;
+          direction: rtl;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+        .header {
+          border-bottom: 2px solid #1e3a5f;
+          padding-bottom: 15px;
+          margin-bottom: 20px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+        .header-title h1 {
+          margin: 0;
+          font-size: 20px;
+          color: #1e3a5f;
+          font-weight: 800;
+        }
+        .header-title p {
+          margin: 4px 0 0 0;
+          font-size: 12px;
+          color: #475569;
+        }
+        .header-meta {
+          text-align: left;
+          font-size: 12px;
+          color: #334155;
+          line-height: 1.6;
+        }
+        .summary-box {
+          background: #f1f5f9;
+          border: 1px solid #e2e8f0;
+          border-radius: 8px;
+          padding: 12px 16px;
+          margin-bottom: 24px;
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 12px;
+        }
+        .summary-item {
+          text-align: center;
+        }
+        .summary-item .num {
+          font-size: 18px;
+          font-weight: 700;
+          color: #1e3a5f;
+        }
+        .summary-item .label {
+          font-size: 11px;
+          color: #475569;
+          margin-top: 3px;
+        }
+        .pdf-cards {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 12px;
+        }
+        .pdf-card {
+          border: 1px solid #e2e8f0;
+          border-radius: 8px;
+          padding: 12px;
+          background: #ffffff;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          page-break-inside: avoid;
+        }
+        .pdf-card-head {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 8px;
+          border-bottom: 1px solid #f1f5f9;
+          padding-bottom: 6px;
+        }
+        .pdf-card-title {
+          font-size: 13px;
+          font-weight: 700;
+          color: #1e3a5f;
+        }
+        .pdf-badge {
+          font-size: 10px;
+          font-weight: 700;
+          padding: 2px 8px;
+          border-radius: 999px;
+        }
+        .pdf-badge.wait { background: #fef3e2; color: #d97706; }
+        .pdf-badge.ready { background: #fff2e6; color: #f97316; }
+        .pdf-badge.done { background: #e7f6ec; color: #16a34a; }
+        .pdf-card-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 6px 10px;
+          font-size: 11px;
+          margin-bottom: 8px;
+        }
+        .pdf-card-grid .lbl {
+          color: #64748b;
+        }
+        .pdf-card-grid .val {
+          font-weight: 600;
+          color: #0f172a;
+        }
+        .pdf-result {
+          background: #f0fdf4;
+          border: 1px solid #bbf7d0;
+          border-radius: 6px;
+          padding: 8px 10px;
+          margin-top: 8px;
+        }
+        .pdf-result.pending {
+          background: #f8fafc;
+          border-color: #cbd5e1;
+        }
+        .signatures {
+          margin-top: 40px;
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 20px;
+          text-align: center;
+          page-break-inside: avoid;
+        }
+        .signature-box {
+          border-top: 1px dashed #cbd5e1;
+          padding-top: 10px;
+          font-size: 12px;
+          color: #475569;
+        }
+        @media print {
+          body {
+            padding: 0;
+            font-size: 11px;
+          }
+          .no-print {
+            display: none;
+          }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <div class="header-title">
+          <h1>گزارش آزمایشگاهی مقاومت بتن (فشاری / خمشی / کششی)</h1>
+          <p>سامانه مدیریت هوشمند بتن‌لب (Concrete Lab)</p>
+        </div>
+        <div class="header-meta">
+          <div><b>تاریخ گزارش:</b> ${toFa(dateStr)}</div>
+          <div><b>تهیه‌کننده:</b> MOSTAFA AZIZI</div>
+        </div>
+      </div>
+
+      <div class="summary-box">
+        <div class="summary-item">
+          <div class="num">${toFa(total)}</div>
+          <div class="label">تعداد کل نمونه‌ها</div>
+        </div>
+        <div class="summary-item">
+          <div class="num">${toFa(done)}</div>
+          <div class="label">نمونه‌های تست‌شده</div>
+        </div>
+        <div class="summary-item">
+          <div class="num">${toFa(total - done)}</div>
+          <div class="label">در انتظار/آماده آزمایش</div>
+        </div>
+        <div class="summary-item">
+          <div class="num">${toFa(plans)}</div>
+          <div class="label">تعداد طرح‌های متمایز</div>
+        </div>
+      </div>
+
+      <div class="pdf-cards">
+        ${rowsHtml}
+      </div>
+
+      <div class="signatures">
+        <div class="signature-box">
+          <b>امضا و مهر آزمایشگر بتن</b><br/><br/><br/><br/>
+        </div>
+        <div class="signature-box">
+          <b>تأیید کنترل کیفیت (QC)</b><br/><br/><br/><br/>
+        </div>
+        <div class="signature-box">
+          <b>امضای مهندس ناظر پروژه</b><br/><br/><br/><br/>
+        </div>
+      </div>
+
+      <script>
+        window.onload = function() {
+          setTimeout(function() {
+            window.print();
+          }, 500);
+        };
+      <\/script>
+    </body>
+    </html>
+  `);
+  printWindow.document.close();
+}
+
+$('#pdfBtn').addEventListener('click', async () => {
+  const list = await dbAll();
+  if (list.length === 0) {
+    toast('هیچ نمونه‌ای برای خروجی وجود ندارد', 'error');
+    return;
+  }
+  generatePDFReport(list);
+});
+
+$('#exportBtn').addEventListener('click', async ()=>{
+  const list = await dbAll();
+  if(list.length === 0){ toast('نمونه‌ای برای خروجی وجود ندارد','error'); return; }
+  const txt = buildTxt(list);
+  const blob = new Blob(['\uFEFF' + txt], { type: 'text/plain;charset=utf-8' });
+  const t = todayJ();
+  const name = `betonlab-${t.jy}${pad2(t.jm)}${pad2(t.jd)}.txt`;
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+  toast('فایل دانلود شد','success');
+});
+
+$('#importBtn').addEventListener('click', ()=> $('#importInput').click());
+$('#importInput').addEventListener('change', async (e)=>{
+  const file = e.target.files[0]; if(!file) return;
+  const text = await file.text();
+  e.target.value = '';
+  const m = text.match(/##BETONLAB_JSON##\s*([\s\S]*?)\s*##END##/);
+  if(!m){ toast('فرمت فایل معتبر نیست','error'); return; }
+  let data;
+  try { data = JSON.parse(m[1]); } catch(err){ toast('خطا در خواندن داده‌ها','error'); return; }
+  if(!Array.isArray(data)){ toast('داده معتبر نیست','error'); return; }
+  if(!confirm(`${data.length} رکورد ادغام می‌شود (رکوردهای تکراری بروزرسانی می‌شوند). ادامه؟`)) return;
+  const tm = text.match(/##BETONLAB_TOMBSTONES##\s*([\s\S]*?)\s*##END##/);
+  let remoteTombs = {};
+  if(tm){ try { remoteTombs = JSON.parse(tm[1]); } catch {} }
+  const n = await mergeRemote(data, remoteTombs);
+  toast(`بازیابی انجام شد • ${toFa(n)} تغییر`,'success');
+  renderList();
+  renderStorageInfo();
+  scheduleAutoSync();
+});
+
+/* ============================================================
+ * HYBRID SYNC ENGINE (CLOUD & FILE SYNC)
+ * پشتیبانی کامل از همگام‌سازی ابری و همگام‌سازی محلی با فایل
+ * ============================================================ */
+
+/* --- 1. CLOUD SYNC ENGINE (Works on ALL devices including iOS & Android) --- */
+const CLOUD = {
+  key: null,
+  bucketUrl: 'https://kvdb.io/2CbyvCAsu9vskD9wS42nky', // Free managed bucket
+  busy: false,
+};
+
+function generateSyncCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for(let i=0; i<6; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
+
+async function cloudPush(silent) {
+  if(!CLOUD.key) return false;
+  if(CLOUD.busy) return false;
+  CLOUD.busy = true;
+  try {
+    const payload = await buildSyncPayload();
+    const res = await fetch(`${CLOUD.bucketUrl}/${CLOUD.key}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: payload
+    });
+    if(!res.ok) throw new Error('Network response not ok');
+    await metaSet('cloudLastSync', Date.now());
+    if(!silent) toast('در ابر ذخیره شد','success');
+    renderSyncPanel();
+    return true;
+  } catch(err) {
+    console.warn('cloud push failed', err);
+    if(!silent) toast('خطا در ارتباط با سرور ابری','error');
+    return false;
+  } finally { CLOUD.busy = false; }
+}
+
+async function cloudPull(silent) {
+  if(!CLOUD.key) return 0;
+  try {
+    const res = await fetch(`${CLOUD.bucketUrl}/${CLOUD.key}`);
+    if(res.status === 404) return 0; // Brand new key
+    if(!res.ok) throw new Error('Network response not ok');
+    const text = await res.text();
+    const m = text.match(/##BETONLAB_JSON##\s*([\s\S]*?)\s*##END##/);
+    if(!m) return 0;
+    let remote = [];
+    try { remote = JSON.parse(m[1]); } catch { return 0; }
+
+    const tm = text.match(/##BETONLAB_TOMBSTONES##\s*([\s\S]*?)\s*##END##/);
+    let remoteTombs = {};
+    if(tm){ try { remoteTombs = JSON.parse(tm[1]); } catch {} }
+
+    const changed = await mergeRemote(remote, remoteTombs);
+    await metaSet('cloudLastSync', Date.now());
+    renderSyncPanel();
+    return changed;
+  } catch(err) {
+    console.warn('cloud pull failed', err);
+    if(!silent) toast('خطا در دریافت از ابر','error');
+    return 0;
+  }
+}
+
+async function cloudConnect(code) {
+  code = toEn(code).toUpperCase().trim();
+  if(code.length !== 6) { toast('کد همگام‌سازی باید ۶ رقم باشد','error'); return; }
+  CLOUD.key = code;
+  await metaSet('cloudSyncKey', code);
+  toast('در حال اتصال به سرور...');
+  const n = await cloudPull(false);
+  await cloudPush(true);
+  toast(`متصل شد • ${toFa(n)} تغییر ادغام شد`,'success');
+  renderSyncPanel();
+}
+
+async function cloudDisconnect() {
+  CLOUD.key = null;
+  await metaDel('cloudSyncKey');
+  await metaDel('cloudLastSync');
+  toast('اتصال ابری قطع شد');
+  renderSyncPanel();
+}
+
+
+/* --- 2. LOCAL FILE SYNC ENGINE (Works on Laptop Chrome/Edge) --- */
+const SYNC = {
+  handle: null,
+  supported: (typeof window.showSaveFilePicker === 'function' && typeof window.showOpenFilePicker === 'function'),
+  busy: false,
+  autoTimer: null,
+};
+
+async function verifyPermission(handle, readWrite){
+  const opts = { mode: readWrite ? 'readwrite' : 'read' };
+  if((await handle.queryPermission(opts)) === 'granted') return true;
+  if((await handle.requestPermission(opts)) === 'granted') return true;
+  return false;
+}
+
+async function syncCreateFile(){
+  if(!SYNC.supported){ toast('مرورگر شما پشتیبانی نمی‌کند','error'); return; }
+  try {
+    const t = todayJ();
+    const handle = await window.showSaveFilePicker({
+      suggestedName: `betonlab-sync-${t.jy}${pad2(t.jm)}${pad2(t.jd)}.txt`,
+      types: [{ description: 'فایل متنی همگام‌سازی', accept: {'text/plain': ['.txt']} }],
+    });
+    SYNC.handle = handle;
+    await metaSet('syncHandle', handle);
+    await syncPush(true);
+    toast('فایل همگام‌سازی ساخته شد','success');
+    renderSyncPanel();
+  } catch(err){
+    if(err.name !== 'AbortError') toast('خطا در ساخت فایل','error');
+  }
+}
+
+async function syncOpenFile(){
+  if(!SYNC.supported){ toast('مرورگر شما پشتیبانی نمی‌کند','error'); return; }
+  try {
+    const [handle] = await window.showOpenFilePicker({
+      types: [{ description: 'فایل متنی همگام‌سازی', accept: {'text/plain': ['.txt']} }],
+      multiple: false,
+    });
+    if(!(await verifyPermission(handle, true))){ toast('دسترسی نوشتن داده نشد','error'); return; }
+    SYNC.handle = handle;
+    await metaSet('syncHandle', handle);
+    const n = await syncPull(true);
+    await syncPush(true);
+    toast(`متصل شد • ${toFa(n)} نمونه دریافت شد`,'success');
+    renderSyncPanel();
+  } catch(err){
+    if(err.name !== 'AbortError') toast('خطا در باز کردن فایل','error');
+  }
+}
+
+async function syncDisconnect(){
+  SYNC.handle = null;
+  await metaDel('syncHandle');
+  await metaDel('lastSync');
+  toast('اتصال به فایل قطع شد');
+  renderSyncPanel();
+}
+
+async function buildSyncPayload(){
+  const samples = await dbAll();
+  const tombstones = await getTombstones();
+  const clean = samples.map(s => { const c = {...s}; delete c.id; return c; });
+  const body = buildTxt(samples);
+  const head = body.split('##BETONLAB_JSON##')[0];
+  return head +
+    '##BETONLAB_JSON##\n' + JSON.stringify(clean) + '\n##END##\n' +
+    '##BETONLAB_TOMBSTONES##\n' + JSON.stringify(tombstones) + '\n##END##\n' +
+    '##SYNCED_AT##' + Date.now() + '##\n';
+}
+
+async function syncPush(silent){
+  if(!SYNC.handle) return false;
+  if(SYNC.busy) return false;
+  SYNC.busy = true;
+  try {
+    // Only verify permission if we have a user gesture or queryPermission is true
+    const hasPerm = (await SYNC.handle.queryPermission({mode:'readwrite'})) === 'granted';
+    if(!hasPerm && silent) return false; // Don't interrupt in bg
+    if(!(await verifyPermission(SYNC.handle, true))){
+      if(!silent) toast('دسترسی نوشتن رد شد','error');
+      return false;
+    }
+    const payload = await buildSyncPayload();
+    const w = await SYNC.handle.createWritable();
+    await w.write('\uFEFF' + payload);
+    await w.close();
+    await metaSet('lastSync', Date.now());
+    if(!silent) toast('در فایل ذخیره شد','success');
+    renderSyncPanel();
+    return true;
+  } catch(err){
+    console.warn('push failed', err);
+    if(!silent) toast('خطا در نوشتن فایل','error');
+    return false;
+  } finally { SYNC.busy = false; }
+}
+
+async function syncPull(silent){
+  if(!SYNC.handle) return 0;
+  try {
+    const hasPerm = (await SYNC.handle.queryPermission({mode:'readwrite'})) === 'granted';
+    if(!hasPerm && silent) return 0; // Don't interrupt in bg
+    if(!(await verifyPermission(SYNC.handle, true))){
+      if(!silent) toast('دسترسی خواندن رد شد','error');
+      return 0;
+    }
+    const file = await SYNC.handle.getFile();
+    const text = await file.text();
+    const m = text.match(/##BETONLAB_JSON##\s*([\s\S]*?)\s*##END##/);
+    if(!m){ if(!silent) toast('فایل خالی یا نامعتبر است'); return 0; }
+    let remote = [];
+    try { remote = JSON.parse(m[1]); } catch { if(!silent) toast('خطا در خواندن داده','error'); return 0; }
+
+    const tm = text.match(/##BETONLAB_TOMBSTONES##\s*([\s\S]*?)\s*##END##/);
+    let remoteTombs = {};
+    if(tm){ try { remoteTombs = JSON.parse(tm[1]); } catch {} }
+
+    const changed = await mergeRemote(remote, remoteTombs);
+    await metaSet('lastSync', Date.now());
+    renderSyncPanel();
+    return changed;
+  } catch(err){
+    console.warn('pull failed', err);
+    if(!silent) toast('خطا در خواندن فایل','error');
+    return 0;
+  }
+}
+
+async function mergeRemote(remote, remoteTombs){
+  const local = await dbAll();
+  const localByUid = new Map();
+  local.forEach(s => { if(s.uid) localByUid.set(s.uid, s); });
+
+  const localTombs = await getTombstones();
+  const allTombs = { ...localTombs };
+  for(const [uid, ts] of Object.entries(remoteTombs || {})){
+    if(!allTombs[uid] || allTombs[uid] < ts) allTombs[uid] = ts;
+  }
+  await metaSet('tombstones', allTombs);
+
+  let changed = 0;
+
+  for(const r of (remote || [])){
+    if(!r.uid){ r.uid = makeUid(); }
+    const tomb = allTombs[r.uid];
+    if(tomb && tomb >= (r.updatedAt || 0)) continue;
+    const l = localByUid.get(r.uid);
+    if(!l){
+      const copy = {...r}; delete copy.id;
+      await dbPut(copy, false);
+      changed++;
+    } else if((r.updatedAt || 0) > (l.updatedAt || 0)){
+      const copy = {...r, id: l.id};
+      await dbPut(copy, false);
+      changed++;
+    }
+  }
+
+  for(const l of local){
+    const tomb = allTombs[l.uid];
+    if(tomb && tomb >= (l.updatedAt || 0)){
+      const db = await openDB();
+      await new Promise(res=>{
+        const r = db.transaction('samples','readwrite').objectStore('samples').delete(l.id);
+        r.onsuccess = ()=> res(); r.onerror = ()=> res();
+      });
+      changed++;
+    }
+  }
+
+  await loadSamples();
+  if(state.view === 'list') renderList();
+  if(state.view === 'test') renderTestSelector();
+  return changed;
+}
+
+/* --- 3. HYBRID CONTROLLERS --- */
+/* Auto-sync toggle state (persisted in IndexedDB meta) */
+let autoSyncEnabled = true;
+
+async function syncNow(silent){
+  let changed = 0;
+  if(CLOUD.key){
+    changed += await cloudPull(silent);
+    await cloudPush(true);
+  }
+  if(SYNC.handle){
+    const hasPerm = (await SYNC.handle.queryPermission({mode:'readwrite'})) === 'granted';
+    if(hasPerm || !silent) {
+      changed += await syncPull(silent);
+      await syncPush(true);
+    }
+  }
+  if(!silent && (CLOUD.key || SYNC.handle)) {
+    toast(changed > 0 ? `همگام‌سازی شد • ${toFa(changed)} تغییر جدید` : 'بروزرسانی شد • تغییری یافت نشد','success');
+  }
+}
+
+function scheduleAutoSync(){
+  if(!autoSyncEnabled) return;
+  clearTimeout(SYNC.autoTimer);
+  SYNC.autoTimer = setTimeout(async ()=>{
+    if(CLOUD.key) await cloudPush(true);
+    if(SYNC.handle) await syncPush(true);
+  }, 1200);
+}
+
+async function restoreSyncSettings(){
+  const key = await metaGet('cloudSyncKey');
+  if(key) CLOUD.key = key;
+
+  const auto = await metaGet('autoSyncEnabled');
+  if(auto === false) autoSyncEnabled = false;
+
+  if(SYNC.supported){
+    try {
+      const h = await metaGet('syncHandle');
+      if(h){
+        SYNC.handle = h;
+        const hasPerm = (await h.queryPermission({mode:'readwrite'})) === 'granted';
+        if(hasPerm) {
+          await syncPull(true);
+          await syncPush(true);
+        }
+      }
+    } catch(err){ console.warn('restore handle failed', err); }
+  }
+  await syncNow(true);
+}
+
+/* --- 4. RENDER SYNC PANEL --- */
+let activeSyncTab = 'cloud'; // cloud or file
+
+async function renderSyncPanel(){
+  const el = $('#syncPanel');
+  if(!el) return;
+
+  const cloudLast = await metaGet('cloudLastSync');
+  const cloudLastStr = cloudLast ? new Date(cloudLast).toLocaleTimeString('fa-IR') + ' ' + new Date(cloudLast).toLocaleDateString('fa-IR') : '—';
+
+  const fileLast = await metaGet('lastSync');
+  const fileLastStr = fileLast ? new Date(fileLast).toLocaleTimeString('fa-IR') + ' ' + new Date(fileLast).toLocaleDateString('fa-IR') : '—';
+
+  el.innerHTML = `
+    <div class="segmented" id="syncTabSeg" style="margin-bottom:14px">
+      <button type="button" data-tab="cloud" class="${activeSyncTab==='cloud'?'active':''}">همگام‌سازی ابری (موبایل و لپ‌تاپ)</button>
+      <button type="button" data-tab="file" class="${activeSyncTab==='file'?'active':''}">فایل محلی (مخصوص لپ‌تاپ)</button>
+    </div>
+    <div class="auto-sync-row">
+      <div>
+        <div style="font-size:13px;font-weight:600">همگام‌سازی خودکار</div>
+        <div class="muted" style="font-size:11px">ذخیره لحظه‌ای بعد از هر تغییر + مرور پس‌زمینه هر ۶۰ ثانیه</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="autoSyncToggle" ${autoSyncEnabled ? 'checked' : ''} />
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div id="syncTabContent"></div>
+  `;
+
+  // Attach Tab Switch events
+  $$('#syncTabSeg button').forEach(b => {
+    b.onclick = () => {
+      activeSyncTab = b.dataset.tab;
+      renderSyncPanel();
+    };
+  });
+
+  // Auto-sync toggle
+  $('#autoSyncToggle').onchange = async (e) => {
+    autoSyncEnabled = e.target.checked;
+    await metaSet('autoSyncEnabled', autoSyncEnabled);
+    if(autoSyncEnabled){
+      syncNow(true);
+      toast('همگام‌سازی خودکار فعال شد','success');
+    } else {
+      toast('همگام‌سازی خودکار غیرفعال شد — فقط دستی');
+    }
+  };
+
+  const content = $('#syncTabContent');
+
+  /* RENDER TAB: CLOUD SYNC */
+  if(activeSyncTab === 'cloud') {
+    if(!CLOUD.key) {
+      content.innerHTML = `
+        <p class="muted" style="margin-top:0;line-height:1.9">
+          این قابلیت به شما اجازه می‌دهد نمونه‌های خود را بدون هیچ نیازی به کابل یا برنامه خاصی، بین گوشی و لپ‌تاپ همگام‌سازی کنید.
+        </p>
+        <div class="field" style="margin-top:10px">
+          <label>اتصال به کد موجود</label>
+          <div style="display:flex;gap:8px">
+            <input class="input" id="c-connectCode" type="text" placeholder="مثال: X7B9K2" style="text-align:center;text-transform:uppercase;letter-spacing:4px;font-weight:600;font-size:16px" maxlength="6" />
+            <button class="btn btn-primary" id="c-connectBtn">اتصال و دریافت</button>
+          </div>
+        </div>
+        <div style="text-align:center;margin:16px 0" class="muted">— یا —</div>
+        <button class="btn btn-outline btn-block" id="c-genBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+          ایجاد کد همگام‌سازی جدید
+        </button>
+      `;
+      $('#c-genBtn').onclick = async () => {
+        const code = generateSyncCode();
+        CLOUD.key = code;
+        await metaSet('cloudSyncKey', code);
+        toast('کد همگام‌سازی جدید ساخته شد','success');
+        await cloudPush(false);
+        renderSyncPanel();
+      };
+      $('#c-connectBtn').onclick = () => {
+        const code = $('#c-connectCode').value;
+        if(!code) { toast('کد را وارد کنید','error'); return; }
+        cloudConnect(code);
+      };
+    } else {
+      content.innerHTML = `
+        <div style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--success-soft);border:1px solid #bfe6cb;border-radius:var(--radius-sm);margin-bottom:12px">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12px;color:var(--success);font-weight:600">همگام‌سازی ابری فعال است</div>
+            <div style="font-size:18px;font-weight:700;color:var(--primary);letter-spacing:3px;font-variant-numeric:tabular-nums">${CLOUD.key}</div>
+          </div>
+          <button class="btn btn-outline btn-sm" id="c-copyBtn" title="کپی کد">کپی</button>
+        </div>
+        <div class="muted" style="margin-bottom:12px">آخرین همگام‌سازی: ${toFa(cloudLastStr)}</div>
+        <p class="hint" style="margin-top:0;line-height:1.8;margin-bottom:12px">
+          کد فوق را روی گوشی یا لپ‌تاپ دیگر خود وارد کنید تا تمام نمونه‌ها، تغییرات و محاسبات به صورت لحظه‌ای با هم ادغام شوند.
+        </p>
+        <div class="btn-row" style="flex-direction:column">
+          <button class="btn btn-primary btn-block" id="c-syncNow">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+            همگام‌سازی الان
+          </button>
+          <button class="btn btn-danger btn-block btn-sm" id="c-disconnect">قطع اتصال ابری</button>
+        </div>
+      `;
+      $('#c-copyBtn').onclick = () => {
+        navigator.clipboard.writeText(CLOUD.key).then(()=> toast('کد کپی شد'));
+      };
+      $('#c-syncNow').onclick = () => syncNow(false);
+      $('#c-disconnect').onclick = cloudDisconnect;
+    }
+  }
+
+  /* RENDER TAB: FILE SYNC */
+  if(activeSyncTab === 'file') {
+    if(!SYNC.supported){
+      content.innerHTML = `
+        <div style="padding:12px;background:var(--warning-soft);border:1px solid #f5d9a8;border-radius:var(--radius-sm);font-size:13px;color:var(--warning);line-height:1.8">
+          <strong>مرورگر یا پلتفرم فعلی شما از دسترسی مستقیم به فایل‌های محلی پشتیبانی نمی‌کند.</strong><br/>
+          (این قابلیت روی مرورگرهای لپ‌تاپ کار می‌کند. در تلفن‌های همراه، از گزینه <b>«همگام‌سازی ابری»</b> استفاده کنید که به خوبی روی همه دستگاه‌ها کار می‌کند.)
+        </div>`;
+      return;
+    }
+
+    if(!SYNC.handle){
+      content.innerHTML = `
+        <p class="muted" style="margin-top:0;line-height:1.9">
+          یک فایل متنی (TXT) را در یک پوشه اشتراکی سیستم خود (مانند Google Drive یا OneDrive) انتخاب کنید تا فایل دیتابیس همگام‌سازی شود.
+        </p>
+        <div class="btn-row" style="flex-direction:column">
+          <button class="btn btn-primary btn-block" id="f-createBtn">ساخت فایل همگام‌سازی جدید</button>
+          <button class="btn btn-outline btn-block" id="f-openBtn">اتصال به فایل موجود</button>
+        </div>
+      `;
+      $('#f-createBtn').onclick = syncCreateFile;
+      $('#f-openBtn').onclick = syncOpenFile;
+    } else {
+      content.innerHTML = `
+        <div style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--success-soft);border:1px solid #bfe6cb;border-radius:var(--radius-sm);margin-bottom:12px">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12px;color:var(--success);font-weight:600">متصل به فایل محلی</div>
+            <div class="muted" style="direction:ltr;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(SYNC.handle.name)}</div>
+          </div>
+        </div>
+        <div class="muted" style="margin-bottom:12px">آخرین همگام‌سازی: ${toFa(fileLastStr)}</div>
+        <div class="btn-row" style="flex-direction:column">
+          <button class="btn btn-primary btn-block" id="f-syncNow">همگام‌سازی الان</button>
+          <button class="btn btn-danger btn-block btn-sm" id="f-disconnect">قطع اتصال از فایل</button>
+        </div>
+      `;
+      $('#f-syncNow').onclick = () => syncNow(false);
+      $('#f-disconnect').onclick = syncDisconnect;
+    }
+  }
+}
+
+/* Auto-pull when the app regains focus */
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState === 'visible' && autoSyncEnabled && (CLOUD.key || SYNC.handle)) syncNow(true);
+});
+
+$('#clearBtn').addEventListener('click', async ()=>{
+  if(!confirm('آیا از پاک کردن همه داده‌ها مطمئن هستید؟ این عمل قابل بازگشت نیست.')) return;
+  if(!confirm('تأیید نهایی: همه نمونه‌ها و نتایج تست حذف شوند؟')) return;
+  await dbClear();
+  await loadSamples();
+  renderList();
+  renderStorageInfo();
+  toast('همه داده‌ها پاک شد','success');
+});
+
+async function renderStorageInfo(){
+  const list = await dbAll();
+  const total = list.length;
+  const withTest = list.filter(s => getSampleTests(s).length > 0).length;
+  const plans = new Set(list.map(s => s.planName)).size;
+  let quota = '';
+  if(navigator.storage && navigator.storage.estimate){
+    try {
+      const est = await navigator.storage.estimate();
+      const used = (est.usage/1024).toFixed(1);
+      const q = (est.quota/1024/1024).toFixed(0);
+      quota = `<br/>حجم استفاده‌شده: ${toFa(used)} کیلوبایت از ${toFa(q)} مگابایت مجاز`;
+    } catch{}
+  }
+  $('#storageInfo').innerHTML = `
+    تعداد کل نمونه‌ها: <strong style="color:var(--text)">${toFa(total)}</strong><br/>
+    تعداد نمونه‌های تست‌شده: <strong style="color:var(--text)">${toFa(withTest)}</strong><br/>
+    تعداد طرح‌های متمایز: <strong style="color:var(--text)">${toFa(plans)}</strong>
+    ${quota}
+  `;
+}
+
+/* ---------- Navigation ---------- */
+$$('.nav button').forEach(b => b.addEventListener('click', ()=> switchView(b.dataset.view)));
+
+/* ---------- Today label ---------- */
+function updateTodayLabel(){
+  const j = todayJ();
+  const dow = FA_WEEKDAYS_FULL[(new Date().getDay()+1)%7];
+  $('#todayLabel').textContent = dow + ' ' + jDateToPretty(j);
+}
+
+/* ---------- Migration: add uid/updatedAt to legacy records ---------- */
+async function migrateUids(){
+  const list = await dbAll();
+  let n = 0;
+  for(const s of list){
+    if(!s.uid || !s.updatedAt){
+      s.uid = s.uid || makeUid();
+      s.updatedAt = s.updatedAt || s.createdAt || Date.now();
+      await dbPut(s, false);
+      n++;
+    }
+  }
+  if(n) await loadSamples();
+}
+
+/* ---------- Init ---------- */
+(async function init(){
+  try {
+    await openDB();
+    updateTodayLabel();
+    resetForm();
+    await loadSamples();
+    await migrateUids();
+    await restoreSyncSettings();
+    renderSyncPanel();
+    // Auto-refresh time-sensitive info every minute
+    setInterval(()=>{
+      if(state.view==='list') renderList();
+    }, 60000);
+    // Periodic background auto-sync every 60 seconds (cloud + file)
+    setInterval(()=>{ if(autoSyncEnabled && (CLOUD.key || SYNC.handle)) syncNow(true); }, 60000);
+  } catch(err){
+    console.error(err);
+    toast('خطا در راه‌اندازی برنامه','error');
+  }
+})();
+
+/* ---------- Service Worker ---------- */
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('./sw.js').catch(err => console.warn('SW registration failed:', err));
+  });
+}
+
+/* ---------- PWA: install prompt + deep view (?view=...) ---------- */
+(function(){
+  'use strict';
+  try{
+    // Deep-link support for manifest shortcuts (./?view=list etc.)
+    const v0 = new URLSearchParams(location.search).get('view');
+    if(v0 && ['register','list','test','settings'].includes(v0)){
+      setTimeout(()=>{ try{ if(typeof switchView === 'function') switchView(v0); }catch(e){} }, 250);
+    }
+
+    // Capture the native install prompt and expose it via a settings card
+    let deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', (e)=>{
+      e.preventDefault();
+      deferredPrompt = e;
+      showInstallCard();
+    });
+    window.addEventListener('appinstalled', ()=>{
+      const c = document.getElementById('installCard');
+      if(c) c.remove();
+      if(typeof toast === 'function') toast('برنامه با موفقیت نصب شد','success');
+    });
+
+    function showInstallCard(){
+      if(document.getElementById('installCard')) return;
+      const settings = document.getElementById('view-settings');
+      if(!settings) return;
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.id = 'installCard';
+      card.innerHTML =
+        '<div class="card-title"><span class="dot" style="background:var(--accent)"></span> نصب اپلیکیشن</div>' +
+        '<p class="muted" style="margin-top:0">برنامه را مانند یک اپلیکیشن نصب کنید تا آیکون آن روی صفحه گوشی/دسکتاپ قرار بگیرد و در پنجره مستقل اجرا شود. در اندروید (Chrome) از منوی مرورگر گزینه «Install app / نصب برنامه / افزودن به صفحه اصلی» نیز قابل استفاده است.</p>' +
+        '<button class="btn btn-primary btn-block" id="installAppBtn">نصب اپلیکیشن (PWA)</button>';
+      settings.prepend(card);
+      card.querySelector('#installAppBtn').addEventListener('click', async ()=>{
+        if(!deferredPrompt) return;
+        deferredPrompt.prompt();
+        const choice = await deferredPrompt.userChoice;
+        if(choice && choice.outcome === 'accepted') card.remove();
+        deferredPrompt = null;
+      });
+    }
+  }catch(err){ console.warn('pwa-helper:', err); }
+})();
+</script>
+
+</body>
+</html>
