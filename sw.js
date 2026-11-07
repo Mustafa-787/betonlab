@@ -2,7 +2,7 @@
  * BetonLab — Service Worker (offline-first PWA)
  * نسخه را هنگام هر انتشار تغییر دهید تا کش کاربران تازه شود.
  * ============================================================ */
-const VERSION = 'betonlab-v1.4.0';
+const VERSION = 'betonlab-v1.5.0';
 const CACHE_STATIC  = VERSION + '-static';
 const CACHE_RUNTIME = VERSION + '-runtime';
 

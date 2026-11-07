@@ -731,6 +731,11 @@
         <div class="k" id="strengthLabel">مقاومت فشاری محاسبه‌شده</div>
         <div><span class="v" id="strengthVal">—</span><span class="u">MPa</span></div>
         <div class="muted" id="strengthDetail" style="margin-top:4px">نیرو و نمونه را انتخاب کنید</div>
+        <div id="cylRow" style="display:none;margin-top:10px;padding-top:10px;border-top:1px dashed #b9c9dc">
+          <div class="k">معادل استوانه‌ای (۱۵۰×۳۰۰)</div>
+          <div><span class="v" id="cylVal">—</span><span class="u">MPa</span></div>
+          <div class="muted" id="cylDetail" style="margin-top:4px"></div>
+        </div>
       </div>
 
       <div style="margin-top:14px">
@@ -774,6 +779,24 @@
     </div>
 
     <div class="card">
+      <div class="card-title"><span class="dot"></span> تبدیل مقاومت مکعبی به استوانه‌ای</div>
+      <p class="muted" style="margin-top:0;line-height:1.9">نتیجه‌ی تست نمونه‌های مکعبی (ترجیحاً ۱۵۰ mm) علاوه بر مقدار مکعبی، به‌صورت معادل استوانه‌ای ۱۵۰×۳۰۰ هم نمایش داده می‌شود. نتایج قبلاً ذخیره‌شده تغییر نمی‌کنند.</p>
+      <div class="field">
+        <label>روش تبدیل</label>
+        <select class="select" id="conv-method">
+          <option value="factor">ضریب ثابت (fcyl = k × fcube)</option>
+          <option value="en206">جدول رده‌های مقاومت EN 206 (درون‌یابی)</option>
+        </select>
+      </div>
+      <div class="field" id="conv-factor-wrap">
+        <label>ضریب k</label>
+        <input class="input" id="conv-factor" type="number" min="0.5" max="1.2" step="0.01" />
+        <div class="hint">مقدار رایج ۰٫۸۰ است؛ مطابق آیین‌نامه‌ی مورد استفاده‌ی خودتان تنظیم کنید.</div>
+      </div>
+      <button class="btn btn-primary btn-block" id="conv-save">ذخیره تنظیمات تبدیل</button>
+    </div>
+
+    <div class="card">
       <div class="card-title"><span class="dot"></span> اطلاعات ذخیره‌سازی</div>
       <div id="storageInfo" class="muted">در حال بارگذاری...</div>
     </div>
@@ -787,7 +810,7 @@
     <div class="card">
       <div class="card-title"><span class="dot"></span> درباره برنامه</div>
       <p class="muted" style="margin-top:0">
-        <strong style="color:var(--text)">بتن‌لب</strong> — نسخه ۵.۶<br/>
+        <strong style="color:var(--text)">بتن‌لب</strong> — نسخه ۵.۷<br/>
         نرم‌افزار مدیریت نمونه‌های بتن آزمایشگاهی و محاسبه مقاومت فشاری بر اساس نوع و ابعاد قالب.
         داده‌ها به صورت محلی در مرورگر شما (IndexedDB) ذخیره می‌شوند و قابل نصب به عنوان اپلیکیشن موبایل هستند.
       </p>
@@ -1159,7 +1182,7 @@ function switchView(v){
   if(v==='register') populatePlanSelect();
   if(v==='list') renderList();
   if(v==='test') renderTestSelector();
-  if(v==='settings'){ renderStorageInfo(); renderSyncPanel(); }
+  if(v==='settings'){ renderStorageInfo(); renderSyncPanel(); renderConvSettings(); }
 }
 
 /* ---------- Jalali Date Picker ---------- */
@@ -1314,11 +1337,73 @@ function calcStrength(sample, force, unit, kind, extras){
     area = Math.PI * (d/2) * (d/2);
   }
   if(area <= 0) return { mpa: 0, area: 0, formula: '', detail: '' };
+  const raw = N / area;
+
+  if(sample.moldType === 'cube'){
+    // مقاومت مکعبی (EN 12390-3) + معادل استوانه‌ای
+    const cyl = cubeToCyl(raw);
+    const is150 = Math.abs(sample.dims.length - 150) < 1.5 && Math.abs(sample.dims.width - 150) < 1.5 && Math.abs(sample.dims.height - 150) < 1.5;
+    return {
+      mpa: raw, area,
+      cylMpa: cyl, convRatio: cyl / raw, convMethod: CONV.method, convWarn: !is150,
+      formula: 'fc,cube = F / Ac',
+      detail: `مساحت مقطع: ${area.toFixed(1)} mm² • fc = F / Ac` + (is150 ? '' : ' • ⚠️ ضریب تبدیل برای مکعب ۱۵۰ mm تعریف شده است'),
+    };
+  }
+
+  // استوانه: اصلاح L/D طبق ASTM C39 بند 8.2 (فقط وقتی L/D ≤ 1.75)
+  const ld = sample.dims.height / sample.dims.diameter;
+  const f = ldFactor(ld);
   return {
-    mpa: N / area, area,
-    formula: 'σ = F / A',
-    detail: `مساحت مقطع: ${area.toFixed(1)} mm² • σ = F / A`,
+    mpa: raw * f, rawMpa: raw, ldFactor: f, area,
+    formula: f !== 1 ? 'σ = (F / A) × k(L/D)' : 'σ = F / A',
+    detail: `مساحت مقطع: ${area.toFixed(1)} mm² • ` + (f !== 1
+      ? `L/D=${ld.toFixed(2)} → ضریب اصلاح ${f.toFixed(3)} (ASTM C39 §8.2)`
+      : 'σ = F / A'),
   };
+}
+
+/* ---------- تبدیل مکعبی ← استوانه‌ای + ضریب L/D ---------- */
+const EN206_PAIRS = [[8,10],[12,15],[16,20],[20,25],[25,30],[30,37],[35,45],[40,50],[45,55],[50,60],[55,67],[60,75],[70,85],[80,95],[90,105],[100,115]]; // [fck,cyl , fck,cube]
+let CONV = { method:'factor', factor:0.80 };
+async function loadConvSettings(){
+  try{
+    const c = await metaGet('convSettings');
+    if(c && (c.method === 'factor' || c.method === 'en206') && c.factor > 0) CONV = c;
+  }catch(e){}
+}
+function cubeToCyl(cube){
+  if(CONV.method === 'en206'){
+    const P = EN206_PAIRS;
+    if(cube <= P[0][1]) return cube * P[0][0] / P[0][1];
+    for(let i=1; i<P.length; i++){
+      if(cube <= P[i][1]){
+        const [c0, k0] = P[i-1], [c1, k1] = P[i];
+        return c0 + (cube - k0) * (c1 - c0) / (k1 - k0);
+      }
+    }
+    const last = P[P.length-1];
+    return cube * last[0] / last[1];
+  }
+  return cube * CONV.factor;
+}
+function convMethodLabel(m, ratio){
+  return m === 'en206'
+    ? 'جدول رده‌های مقاومت EN 206 (درون‌یابی)'
+    : 'ضریب ثابت ' + (ratio ? ratio.toFixed(2) : CONV.factor.toFixed(2));
+}
+/* ASTM C39/C39M §8.2: ضریب اصلاح برای L/D ≤ 1.75 (درون‌یابی خطی) */
+function ldFactor(ld){
+  if(!(ld > 0) || ld > 1.75) return 1;
+  const T = [[1.00,0.87],[1.25,0.93],[1.50,0.96],[1.75,0.98]];
+  if(ld <= T[0][0]) return T[0][1];
+  for(let i=1; i<T.length; i++){
+    if(ld <= T[i][0]){
+      const [x0,y0] = T[i-1], [x1,y1] = T[i];
+      return y0 + (ld - x0) * (y1 - y0) / (x1 - x0);
+    }
+  }
+  return 1;
 }
 
 function getSampleTests(s){
@@ -1828,6 +1913,8 @@ function renderSampleCard(s){
         <div>
           <div class="k">مقاومت ${TEST_KIND_LABEL[tr.kind || 'compression']}</div>
           <div><span class="v">${toFa((tr.mpa||0).toFixed(2))}</span><span class="u">MPa</span></div>
+          ${tr.cylMpa ? `<div class="muted" style="margin-top:4px">معادل استوانه‌ای: <strong style="color:var(--primary);font-size:15px">${toFa(Number(tr.cylMpa).toFixed(2))}</strong> MPa</div>` : ''}
+          ${tr.ldFactor ? `<div class="muted" style="margin-top:4px">اصلاح L/D اعمال شد (ضریب ${toFa(Number(tr.ldFactor).toFixed(3))})</div>` : ''}
         </div>
         <div class="muted" style="text-align:left">
           نیرو: ${toFa(tr.force)} ${unitLabel(tr.unit)}<br/>
@@ -2059,6 +2146,8 @@ function updateStrengthDisplay(){
   const kind = getCurrentTestKind();
   const box = $('#strengthVal');
   const detail = $('#strengthDetail');
+  const cylRow = $('#cylRow');
+  if(cylRow) cylRow.style.display = 'none';
   if(!s || !(force > 0)){
     box.textContent = '—';
     detail.textContent = 'نیرو و نمونه را انتخاب کنید';
@@ -2072,6 +2161,11 @@ function updateStrengthDisplay(){
   box.textContent = toFa(r.mpa.toFixed(2));
   const N = forceToN(force, unit);
   detail.innerHTML = `${r.detail || ''} • نیرو: ${toFa(N.toFixed(1))} N`;
+  if(cylRow && r.cylMpa){
+    $('#cylVal').textContent = toFa(r.cylMpa.toFixed(2));
+    $('#cylDetail').textContent = 'روش: ' + convMethodLabel(r.convMethod, r.convRatio) + ' • نسبت ' + toFa(r.convRatio.toFixed(3));
+    cylRow.style.display = 'block';
+  }
 }
 
 $('#saveTestBtn').addEventListener('click', async ()=>{
@@ -2096,6 +2190,10 @@ $('#saveTestBtn').addEventListener('click', async ()=>{
     mpa: r.mpa,
     area: r.area,
     formula: r.formula,
+    cylMpa: r.cylMpa || undefined,
+    convRatio: r.convRatio || undefined,
+    convMethod: r.cylMpa ? r.convMethod : undefined,
+    ldFactor: (r.ldFactor && r.ldFactor !== 1) ? r.ldFactor : undefined,
     span: r.span || extras.span || undefined,
     setup: r.setup || extras.flexSetup || undefined,
     savedAt: Date.now(),
@@ -2253,6 +2351,8 @@ function buildTxt(samples, mixes){
         if(tr.span) lines.push('  دهانه بارگذاری: ' + tr.span + ' mm');
         if(tr.formula) lines.push('  فرمول:         ' + tr.formula);
         lines.push('  مقاومت ' + TEST_KIND_LABEL[k] + ': ' + Number(tr.mpa).toFixed(2) + ' MPa');
+        if(tr.cylMpa) lines.push('  معادل استوانه‌ای: ' + Number(tr.cylMpa).toFixed(2) + ' MPa  (' + convMethodLabel(tr.convMethod, tr.convRatio) + ')');
+        if(tr.ldFactor) lines.push('  ضریب اصلاح L/D: ' + Number(tr.ldFactor).toFixed(3));
       });
     }
     lines.push('');
@@ -2289,7 +2389,7 @@ async function generatePDFReport(samples) {
     if (pdfTests.length) {
       resultHtml = pdfTests.map(tr => `
         <div class="pdf-result">
-          <div style="font-size: 11px; color: #475569; margin-bottom: 4px;">نتیجه آزمایش ${TEST_KIND_LABEL[tr.kind || 'compression']}:</div>
+          <div style="font-size: 11px; color: #475569; margin-bottom: 4px;">نتیجه آزمایش ${TEST_KIND_LABEL[tr.kind || 'compression']}${tr.cylMpa ? ' (مکعبی) — معادل استوانه‌ای: <b style="color:#1e3a5f">' + toFa(Number(tr.cylMpa).toFixed(2)) + ' MPa</b> [' + convMethodLabel(tr.convMethod, tr.convRatio) + ']' : ''}${tr.ldFactor ? ' — با اصلاح L/D (×' + toFa(Number(tr.ldFactor).toFixed(3)) + ')' : ''}:</div>
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <div>
               <span style="font-size: 18px; font-weight: 700; color: #16a34a;">${toFa(Number(tr.mpa).toFixed(2))}</span>
@@ -3036,6 +3136,26 @@ async function renderStorageInfo(){
   `;
 }
 
+/* ---------- Conversion settings UI ---------- */
+function renderConvSettings(){
+  const m = $('#conv-method'); if(!m) return;
+  m.value = CONV.method;
+  $('#conv-factor').value = CONV.factor;
+  $('#conv-factor-wrap').style.display = CONV.method === 'factor' ? 'block' : 'none';
+}
+$('#conv-method').addEventListener('change', ()=>{
+  $('#conv-factor-wrap').style.display = $('#conv-method').value === 'factor' ? 'block' : 'none';
+});
+$('#conv-save').addEventListener('click', async ()=>{
+  const method = $('#conv-method').value;
+  const factor = parseFloat(toEn($('#conv-factor').value));
+  if(method === 'factor' && !(factor >= 0.5 && factor <= 1.2)){ toast('ضریب باید بین ۰٫۵ و ۱٫۲ باشد','error'); return; }
+  CONV = { method, factor: (factor >= 0.5 && factor <= 1.2) ? factor : CONV.factor };
+  await metaSet('convSettings', CONV);
+  toast('تنظیمات تبدیل ذخیره شد','success');
+  updateStrengthDisplay();
+});
+
 /* ---------- Navigation ---------- */
 $$('.nav button').forEach(b => b.addEventListener('click', ()=> switchView(b.dataset.view)));
 
@@ -3065,6 +3185,7 @@ async function migrateUids(){
 (async function init(){
   try {
     await openDB();
+    await loadConvSettings();
     requestPersistence();
     updateTodayLabel();
     await loadMixes();
