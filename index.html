@@ -356,6 +356,13 @@
     .divider { height: 1px; background: var(--border); margin: 12px 0; }
     .tag { display: inline-block; padding: 2px 8px; background: var(--primary-soft); color: var(--primary); border-radius: 4px; font-size: 11px; font-weight: 500; }
 
+    .banner { border-radius: var(--radius); padding: 12px 14px; margin-bottom: 12px; border: 1px solid; }
+    .banner.warn { background: var(--warning-soft); border-color: #f5d9a8; }
+    .banner.info { background: var(--primary-soft); border-color: #d3e0ee; }
+    .banner .b-title { font-weight: 600; font-size: 14px; margin-bottom: 4px; color: var(--text); }
+    .banner .b-text { font-size: 12.5px; line-height: 1.9; color: var(--text-muted); }
+    .banner .b-actions { display: flex; gap: 8px; margin-top: 10px; }
+
     @media (max-width: 380px) {
       .stats { grid-template-columns: repeat(2, 1fr); }
       .filters { grid-template-columns: 1fr 1fr; }
@@ -381,6 +388,8 @@
 </header>
 
 <div class="container">
+
+  <div id="safetyBanners"></div>
 
   <!-- VIEW: MIX DESIGN -->
   <section id="view-mix" class="view">
@@ -686,6 +695,10 @@
       <div class="card-title"><span class="dot"></span> خروجی و پشتیبان‌گیری</div>
       <p class="muted" style="margin-top:0">خروجی رسمی PDF آزمایشگاه با طرح مهندسی شکیل، یا فایل پشتیبان متنی برای ذخیره محلی تهیه کنید.</p>
       <div class="btn-row" style="flex-direction:column">
+        <button class="btn btn-primary btn-block" id="shareBackupBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          پشتیبان‌گیری سریع (ذخیره در Files / Drive / تلگرام)
+        </button>
         <button class="btn btn-accent btn-block" id="pdfBtn">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
           تهیه و چاپ گزارش PDF رسمی
@@ -716,7 +729,7 @@
     <div class="card">
       <div class="card-title"><span class="dot"></span> درباره برنامه</div>
       <p class="muted" style="margin-top:0">
-        <strong style="color:var(--text)">بتن‌لب</strong> — نسخه ۵.۳<br/>
+        <strong style="color:var(--text)">بتن‌لب</strong> — نسخه ۵.۵<br/>
         نرم‌افزار مدیریت نمونه‌های بتن آزمایشگاهی و محاسبه مقاومت فشاری بر اساس نوع و ابعاد قالب.
         داده‌ها به صورت محلی در مرورگر شما (IndexedDB) ذخیره می‌شوند و قابل نصب به عنوان اپلیکیشن موبایل هستند.
       </p>
@@ -902,90 +915,75 @@ function openDB(){
         mx.createIndex('code','code',{unique:false});
       }
     };
-    req.onsuccess = ()=>{ _db=req.result; resolve(_db); };
+    req.onsuccess = ()=>{
+      _db = req.result;
+      // iOS/Android may close the connection in background: reset so next call reopens it
+      _db.onclose = ()=>{ _db = null; };
+      _db.onversionchange = ()=>{ try{ _db.close(); }catch(e){} _db = null; };
+      resolve(_db);
+    };
     req.onerror = ()=> reject(req.error);
   });
 }
 
+/* ---------- Commit-safe transaction helper ----------
+ * promise فقط وقتی حل می‌شود که تراکنش واقعاً commit شده باشد (tx.oncomplete)،
+ * نه وقتی درخواست موفق می‌شود. اگر اتصال توسط سیستم بسته شده باشد یک بار دوباره باز می‌شود. */
+async function txp(store, mode, fn){
+  let lastErr;
+  for(let attempt=0; attempt<2; attempt++){
+    const db = await openDB();
+    try{
+      return await new Promise((res,rej)=>{
+        const tx = db.transaction(store, mode);
+        let out;
+        const r = fn(tx.objectStore(store), tx);
+        if(r && 'onsuccess' in r) r.onsuccess = ()=>{ out = r.result; };
+        tx.oncomplete = ()=> res(out);
+        tx.onerror = ()=> rej(tx.error || (r && r.error) || new Error('tx error'));
+        tx.onabort = ()=> rej(tx.error || new Error('tx aborted'));
+      });
+    }catch(e){
+      lastErr = e;
+      if(attempt===0 && e && (e.name==='InvalidStateError' || e.name==='TransactionInactiveError')){
+        _db = null; continue;
+      }
+      throw e;
+    }
+  }
+  throw lastErr;
+}
+
 /* meta store: stores file handle + sync settings */
-async function metaSet(key, value){
-  const db = await openDB();
-  return new Promise((res,rej)=>{
-    const r = db.transaction('meta','readwrite').objectStore('meta').put({ key, value });
-    r.onsuccess = ()=> res();
-    r.onerror = ()=> rej(r.error);
-  });
-}
+async function metaSet(key, value){ return txp('meta','readwrite', st => st.put({ key, value })); }
 async function metaGet(key){
-  const db = await openDB();
-  return new Promise((res,rej)=>{
-    const r = db.transaction('meta','readonly').objectStore('meta').get(key);
-    r.onsuccess = ()=> res(r.result ? r.result.value : undefined);
-    r.onerror = ()=> rej(r.error);
-  });
+  const r = await txp('meta','readonly', st => st.get(key));
+  return r ? r.value : undefined;
 }
-async function metaDel(key){
-  const db = await openDB();
-  return new Promise((res,rej)=>{
-    const r = db.transaction('meta','readwrite').objectStore('meta').delete(key);
-    r.onsuccess = ()=> res();
-    r.onerror = ()=> rej(r.error);
-  });
-}
+async function metaDel(key){ return txp('meta','readwrite', st => st.delete(key)); }
 function makeUid(){
   return 'S' + Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+}
+/* uid پایدار برای رکوردهای قدیمی فاقد uid (تا در هر pull تکثیر نشوند) */
+function legacyUid(r){
+  return 'L' + (r.createdAt||0).toString(36) + '_' + String(r.planName || r.code || '') + '_' + String(r.sampleNo || '') + '_' + String(r.sampleName || '');
 }
 async function dbAdd(item){
   if(!item.uid) item.uid = makeUid();
   item.updatedAt = Date.now();
-  const db = await openDB();
-  return new Promise((res,rej)=>{
-    const tx = db.transaction('samples','readwrite');
-    const r = tx.objectStore('samples').add(item);
-    r.onsuccess = ()=> res(r.result);
-    r.onerror = ()=> rej(r.error);
-  });
+  return txp('samples','readwrite', st => st.add(item));
 }
 async function dbPut(item, touch=true){
   if(!item.uid) item.uid = makeUid();
   if(touch) item.updatedAt = Date.now();
-  const db = await openDB();
-  return new Promise((res,rej)=>{
-    const tx = db.transaction('samples','readwrite');
-    const r = tx.objectStore('samples').put(item);
-    r.onsuccess = ()=> res(r.result);
-    r.onerror = ()=> rej(r.error);
-  });
+  return txp('samples','readwrite', st => st.put(item));
 }
-async function dbGet(id){
-  const db = await openDB();
-  return new Promise((res,rej)=>{
-    const r = db.transaction('samples','readonly').objectStore('samples').get(id);
-    r.onsuccess = ()=> res(r.result);
-    r.onerror = ()=> rej(r.error);
-  });
-}
-async function dbAll(){
-  const db = await openDB();
-  return new Promise((res,rej)=>{
-    const arr=[];
-    const r = db.transaction('samples','readonly').objectStore('samples').openCursor();
-    r.onsuccess = (e)=>{
-      const cur=e.target.result;
-      if(cur){ arr.push(cur.value); cur.continue(); } else res(arr);
-    };
-    r.onerror = ()=> rej(r.error);
-  });
-}
+async function dbGet(id){ return txp('samples','readonly', st => st.get(id)); }
+async function dbAll(){ return (await txp('samples','readonly', st => st.getAll())) || []; }
 async function dbDelete(id){
   const item = await dbGet(id);
   if(item && item.uid) await addTombstone(item.uid);
-  const db = await openDB();
-  return new Promise((res,rej)=>{
-    const r = db.transaction('samples','readwrite').objectStore('samples').delete(id);
-    r.onsuccess = ()=> res();
-    r.onerror = ()=> rej(r.error);
-  });
+  return txp('samples','readwrite', st => st.delete(id));
 }
 async function addTombstone(uid){
   const t = (await metaGet('tombstones')) || {};
@@ -993,67 +991,49 @@ async function addTombstone(uid){
   await metaSet('tombstones', t);
 }
 async function getTombstones(){ return (await metaGet('tombstones')) || {}; }
+/* پاک کردن همه: برای همه رکوردها tombstone ثبت می‌شود تا همگام‌سازی آن‌ها را برنگرداند؛
+ * طرح‌های اختلاط هم پاک می‌شوند. */
 async function dbClear(){
-  const db = await openDB();
-  return new Promise((res,rej)=>{
-    const r = db.transaction('samples','readwrite').objectStore('samples').clear();
-    r.onsuccess = ()=> res();
-    r.onerror = ()=> rej(r.error);
-  });
+  const all = await dbAll();
+  const mixes = await dbAllMixes();
+  const t = (await metaGet('tombstones')) || {};
+  const mt = (await metaGet('mixTombstones')) || {};
+  const now = Date.now();
+  all.forEach(s => { if(s.uid) t[s.uid] = now; });
+  mixes.forEach(m => { if(m.uid) mt[m.uid] = now; });
+  await metaSet('tombstones', t);
+  await metaSet('mixTombstones', mt);
+  await txp('samples','readwrite', st => st.clear());
+  await txp('mixes','readwrite', st => st.clear());
+}
+/* tombstoneهای قدیمی‌تر از یک سال حذف می‌شوند تا بی‌نهایت رشد نکنند */
+async function pruneTombstones(){
+  const limit = Date.now() - 365*24*3600*1000;
+  for(const key of ['tombstones','mixTombstones']){
+    const t = (await metaGet(key)) || {};
+    let changed = false;
+    for(const [uid, ts] of Object.entries(t)){ if(ts < limit){ delete t[uid]; changed = true; } }
+    if(changed) await metaSet(key, t);
+  }
 }
 
 /* ---------- Mixes store (طرح‌های اختلاط) ---------- */
 async function dbAddMix(item){
   if(!item.uid) item.uid = makeUid();
   item.updatedAt = Date.now();
-  const db = await openDB();
-  return new Promise((res,rej)=>{
-    const tx = db.transaction('mixes','readwrite');
-    const r = tx.objectStore('mixes').add(item);
-    r.onsuccess = ()=> res(r.result);
-    r.onerror = ()=> rej(r.error);
-  });
+  return txp('mixes','readwrite', st => st.add(item));
 }
 async function dbPutMix(item, touch=true){
   if(!item.uid) item.uid = makeUid();
   if(touch) item.updatedAt = Date.now();
-  const db = await openDB();
-  return new Promise((res,rej)=>{
-    const tx = db.transaction('mixes','readwrite');
-    const r = tx.objectStore('mixes').put(item);
-    r.onsuccess = ()=> res(r.result);
-    r.onerror = ()=> rej(r.error);
-  });
+  return txp('mixes','readwrite', st => st.put(item));
 }
-async function dbGetMix(id){
-  const db = await openDB();
-  return new Promise((res,rej)=>{
-    const r = db.transaction('mixes','readonly').objectStore('mixes').get(id);
-    r.onsuccess = ()=> res(r.result);
-    r.onerror = ()=> rej(r.error);
-  });
-}
-async function dbAllMixes(){
-  const db = await openDB();
-  return new Promise((res,rej)=>{
-    const arr=[];
-    const r = db.transaction('mixes','readonly').objectStore('mixes').openCursor();
-    r.onsuccess = (e)=>{
-      const cur=e.target.result;
-      if(cur){ arr.push(cur.value); cur.continue(); } else res(arr);
-    };
-    r.onerror = ()=> rej(r.error);
-  });
-}
+async function dbGetMix(id){ return txp('mixes','readonly', st => st.get(id)); }
+async function dbAllMixes(){ return (await txp('mixes','readonly', st => st.getAll())) || []; }
 async function dbDeleteMix(id){
   const item = await dbGetMix(id);
   if(item && item.uid) await addMixTombstone(item.uid);
-  const db = await openDB();
-  return new Promise((res,rej)=>{
-    const r = db.transaction('mixes','readwrite').objectStore('mixes').delete(id);
-    r.onsuccess = ()=> res();
-    r.onerror = ()=> rej(r.error);
-  });
+  return txp('mixes','readwrite', st => st.delete(id));
 }
 async function addMixTombstone(uid){
   const t = (await metaGet('mixTombstones')) || {};
@@ -1061,6 +1041,23 @@ async function addMixTombstone(uid){
   await metaSet('mixTombstones', t);
 }
 async function getMixTombstones(){ return (await metaGet('mixTombstones')) || {}; }
+
+/* ---------- Persistence / backup safety ---------- */
+async function requestPersistence(){
+  try{
+    if(navigator.storage && navigator.storage.persist){
+      if(!(await navigator.storage.persisted())) await navigator.storage.persist();
+    }
+  }catch(e){}
+}
+function isIOSDevice(){
+  return /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+function isStandaloneMode(){
+  return navigator.standalone === true ||
+    (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+}
 
 /* ---------- App State ---------- */
 const state = {
@@ -1402,6 +1399,9 @@ $('#mixForm').addEventListener('submit', async (e)=>{
     renderMixList();
     populatePlanSelect();
     scheduleAutoSync();
+  } catch(err){
+    console.error('save failed', err);
+    toast('خطا در ذخیره‌سازی! لطفاً دوباره تلاش کنید و یک پشتیبان بگیرید','error');
   } finally {
     btn.disabled = false;
   }
@@ -1653,6 +1653,9 @@ $('#sampleForm').addEventListener('submit', async (e)=>{
   await loadSamples();
   scheduleAutoSync();
   switchView('list');
+  } catch(err){
+    console.error('save failed', err);
+    toast('خطا در ذخیره‌سازی! لطفاً دوباره تلاش کنید و یک پشتیبان بگیرید','error');
   } finally {
     btn.disabled = false;
   }
@@ -2048,10 +2051,84 @@ $('#saveTestBtn').addEventListener('click', async ()=>{
   await loadSamples();
   scheduleAutoSync();
   switchView('list');
+  } catch(err){
+    console.error('save failed', err);
+    toast('خطا در ذخیره‌سازی! لطفاً دوباره تلاش کنید و یک پشتیبان بگیرید','error');
   } finally {
     btn.disabled = false;
   }
 });
+
+/* ---------- Quick backup (Share sheet) + safety banners ---------- */
+let _iosBannerHidden = false;
+async function shareBackup(){
+  const list = await dbAll();
+  const mixList = await dbAllMixes();
+  if(list.length === 0 && mixList.length === 0){ toast('داده‌ای برای پشتیبان‌گیری وجود ندارد','error'); return; }
+  const txt = '\uFEFF' + buildTxt(list, mixList);
+  const t = todayJ();
+  const name = `betonlab-${t.jy}${pad2(t.jm)}${pad2(t.jd)}.txt`;
+  try{
+    const file = new File([txt], name, { type:'text/plain' });
+    if(navigator.canShare && navigator.canShare({ files:[file] })){
+      await navigator.share({ files:[file], title:'پشتیبان بتن‌لب' });
+      await metaSet('lastBackup', Date.now());
+      toast('پشتیبان آماده شد','success');
+      initSafetyBanners(); renderStorageInfo();
+      return;
+    }
+  }catch(err){
+    if(err && err.name === 'AbortError') return;
+    console.warn('share failed, falling back to download', err);
+  }
+  const blob = new Blob([txt], { type:'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=> URL.revokeObjectURL(url), 2000);
+  await metaSet('lastBackup', Date.now());
+  toast('فایل پشتیبان دانلود شد','success');
+  initSafetyBanners(); renderStorageInfo();
+}
+
+async function initSafetyBanners(){
+  const wrap = $('#safetyBanners');
+  if(!wrap) return;
+  let html = '';
+  if(isIOSDevice() && !isStandaloneMode() && !_iosBannerHidden){
+    html += `
+      <div class="banner warn">
+        <div class="b-title">⚠️ داده‌ها ممکن است پاک شوند</div>
+        <div class="b-text">Safari داده‌های سایت را بعد از ۷ روز عدم استفاده پاک می‌کند. برنامه را به Home Screen اضافه کنید: دکمه Share ← Add to Home Screen، و از آن به بعد فقط از همان آیکون استفاده کنید. (اگر داده‌ای در Safari دارید، قبلش پشتیبان بگیرید و داخل برنامه‌ی نصب‌شده بازیابی کنید.)</div>
+        <div class="b-actions">
+          <button class="btn btn-primary btn-sm" data-banner="backup">پشتیبان‌گیری</button>
+          <button class="btn btn-outline btn-sm" data-banner="hide-ios">بعداً</button>
+        </div>
+      </div>`;
+  }
+  try{
+    const total = (await dbAll()).length + (await dbAllMixes()).length;
+    const last = await metaGet('lastBackup');
+    const stale = !last || (Date.now() - last) > 5*24*3600*1000;
+    if(total > 0 && stale){
+      const days = last ? Math.floor((Date.now()-last)/86400000) : null;
+      html += `
+        <div class="banner info">
+          <div class="b-title">💾 پشتیبان‌گیری یادتان نرود</div>
+          <div class="b-text">${days === null ? 'تا به حال از داده‌ها پشتیبان نگرفته‌اید.' : 'آخرین پشتیبان ' + toFa(days) + ' روز پیش بوده.'} یک فایل پشتیبان را در Files / Drive / تلگرام ذخیره کنید.</div>
+          <div class="b-actions"><button class="btn btn-primary btn-sm" data-banner="backup">پشتیبان‌گیری الان</button></div>
+        </div>`;
+    }
+  }catch(e){}
+  wrap.innerHTML = html;
+  $$('#safetyBanners [data-banner]').forEach(b=>{
+    b.onclick = ()=>{
+      if(b.dataset.banner === 'backup') shareBackup();
+      else if(b.dataset.banner === 'hide-ios'){ _iosBannerHidden = true; initSafetyBanners(); }
+    };
+  });
+}
 
 /* ---------- Export / Import TXT ---------- */
 function buildTxt(samples, mixes){
@@ -2441,9 +2518,12 @@ $('#exportBtn').addEventListener('click', async ()=>{
   a.href = url; a.download = name;
   document.body.appendChild(a); a.click(); a.remove();
   URL.revokeObjectURL(url);
+  await metaSet('lastBackup', Date.now());
+  initSafetyBanners();
   toast('فایل دانلود شد','success');
 });
 
+$('#shareBackupBtn').addEventListener('click', shareBackup);
 $('#importBtn').addEventListener('click', ()=> $('#importInput').click());
 $('#importInput').addEventListener('change', async (e)=>{
   const file = e.target.files[0]; if(!file) return;
@@ -2635,7 +2715,7 @@ async function mergeRemote(remote, remoteTombs){
   let changed = 0;
 
   for(const r of (remote || [])){
-    if(!r.uid){ r.uid = makeUid(); }
+    if(!r.uid){ r.uid = legacyUid(r); }
     const tomb = allTombs[r.uid];
     if(tomb && tomb >= (r.updatedAt || 0)) continue;
     const l = localByUid.get(r.uid);
@@ -2683,7 +2763,7 @@ async function mergeRemoteMixes(remote, remoteTombs){
   let changed = 0;
 
   for(const r of (remote || [])){
-    if(!r.uid){ r.uid = makeUid(); }
+    if(!r.uid){ r.uid = legacyUid(r); }
     const tomb = allTombs[r.uid];
     if(tomb && tomb >= (r.updatedAt || 0)) continue;
     const l = localByUid.get(r.uid);
@@ -2735,10 +2815,15 @@ async function syncNow(silent){
 }
 
 function scheduleAutoSync(){
+  requestPersistence();
+  initSafetyBanners();
   if(!autoSyncEnabled) return;
   clearTimeout(SYNC.autoTimer);
   SYNC.autoTimer = setTimeout(async ()=>{
-    if(SYNC.handle) await syncPush(true);
+    if(SYNC.handle){
+      await syncPull(true);   // اول ادغام با فایل، بعد نوشتن؛ تا تغییرات دستگاه دیگر بازنویسی نشود
+      await syncPush(true);
+    }
   }, 1200);
 }
 
@@ -2840,7 +2925,10 @@ async function renderSyncPanel(){
 
 /* Auto-pull when the app regains focus */
 document.addEventListener('visibilitychange', ()=>{
-  if(document.visibilityState === 'visible' && autoSyncEnabled && SYNC.handle) syncNow(true);
+  if(document.visibilityState === 'visible'){
+    if(autoSyncEnabled && SYNC.handle) syncNow(true);
+    initSafetyBanners();
+  }
 });
 
 
@@ -2849,7 +2937,11 @@ $('#clearBtn').addEventListener('click', async ()=>{
   if(!confirm('تأیید نهایی: همه نمونه‌ها و نتایج تست حذف شوند؟')) return;
   await dbClear();
   await loadSamples();
+  await loadMixes();
+  populatePlanSelect();
+  renderMixList();
   renderList();
+  scheduleAutoSync();
   renderStorageInfo();
   toast('همه داده‌ها پاک شد','success');
 });
@@ -2860,6 +2952,15 @@ async function renderStorageInfo(){
   const withTest = list.filter(s => getSampleTests(s).length > 0).length;
   const plans = new Set(list.map(s => s.planName)).size;
   let quota = '';
+  let persistLine = '';
+  try{
+    if(navigator.storage && navigator.storage.persisted){
+      const p = await navigator.storage.persisted();
+      persistLine = `<br/>حافظه پایدار: <strong style="color:${p ? 'var(--success)' : 'var(--warning)'}">${p ? 'فعال' : 'غیرفعال (ممکن است مرورگر داده را پاک کند)'}</strong>`;
+    }
+    const lb = await metaGet('lastBackup');
+    persistLine += `<br/>آخرین پشتیبان: <strong style="color:var(--text)">${lb ? toFa(new Date(lb).toLocaleDateString('fa-IR')) : 'هرگز'}</strong>`;
+  }catch(e){}
   if(navigator.storage && navigator.storage.estimate){
     try {
       const est = await navigator.storage.estimate();
@@ -2872,6 +2973,7 @@ async function renderStorageInfo(){
     تعداد کل نمونه‌ها: <strong style="color:var(--text)">${toFa(total)}</strong><br/>
     تعداد نمونه‌های تست‌شده: <strong style="color:var(--text)">${toFa(withTest)}</strong><br/>
     تعداد طرح‌های متمایز: <strong style="color:var(--text)">${toFa(plans)}</strong>
+    ${persistLine}
     ${quota}
   `;
 }
@@ -2905,12 +3007,15 @@ async function migrateUids(){
 (async function init(){
   try {
     await openDB();
+    requestPersistence();
     updateTodayLabel();
     await loadMixes();
     resetForm();
     await loadSamples();
     await migrateUids();
     await restoreSyncSettings();
+    await pruneTombstones();
+    initSafetyBanners();
     renderSyncPanel();
     // Auto-refresh time-sensitive info every minute
     setInterval(()=>{
