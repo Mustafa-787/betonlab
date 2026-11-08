@@ -421,6 +421,16 @@
       #samplesList, #mixesList { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     }
 
+    #view-analysis .card-title { text-transform: none; }
+    .an-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .an-table th { text-align: start; color: var(--text-muted); font-weight: 500; font-size: 12px; padding: 6px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    .an-table td { padding: 8px; border-bottom: 1px dashed var(--border); font-variant-numeric: tabular-nums; vertical-align: top; }
+    .an-table tbody tr[data-an-mix]:hover { background: var(--primary-soft); }
+    .an-warn { background: var(--warning-soft); border: 1px solid #f5d9a8; color: #92580a; border-radius: var(--radius-sm); padding: 10px 12px; margin-top: 10px; font-size: 12.5px; line-height: 1.9; }
+    .chart-box { overflow-x: auto; }
+    .chart-grid { display: grid; grid-template-columns: 1fr; gap: 0; }
+    @media (min-width: 900px) { .chart-grid { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; } }
+
     @media (max-width: 380px) {
       .stats { grid-template-columns: repeat(2, 1fr); }
       .filters { grid-template-columns: 1fr 1fr; }
@@ -747,6 +757,33 @@
     </div>
   </section>
 
+  <!-- VIEW: ANALYSIS -->
+  <section id="view-analysis" class="view">
+    <div class="card">
+      <div class="card-title"><span class="dot"></span> تحلیل داده‌های مقاومت (ACI 214R-11 / ACI 211.1-22)</div>
+      <div class="grid-2">
+        <div class="field"><label>طرح اختلاط</label><select class="select" id="an-mix"></select></div>
+        <div class="field"><label>سن تست</label><select class="select" id="an-age"></select></div>
+      </div>
+      <div class="grid-2">
+        <div class="field"><label>مبنای مقاومت</label>
+          <select class="select" id="an-basis">
+            <option value="cyl">معادل استوانه‌ای (مکعبی‌ها تبدیل می‌شوند)</option>
+            <option value="raw">همان‌طور که اندازه‌گیری شده</option>
+          </select></div>
+        <div class="field"><label>کلاس عملیات</label>
+          <select class="select" id="an-class">
+            <option value="lab">بچ‌های آزمایشگاهی</option>
+            <option value="general">ساخت‌وساز عمومی / کنترل میدانی</option>
+          </select></div>
+      </div>
+      <div class="field" style="margin-bottom:0"><label>مقاومت مشخصه f'c (MPa)</label>
+        <input class="input" id="an-fc" type="number" min="0" step="0.1" placeholder="از طرح اختلاط خوانده می‌شود" />
+        <div class="hint">اگر خالی بماند از f'c ثبت‌شده در طرح اختلاط استفاده می‌شود؛ برای «کل سیستم» باید وارد کنید.</div></div>
+    </div>
+    <div id="anResults"></div>
+  </section>
+
   <!-- VIEW: SETTINGS -->
   <section id="view-settings" class="view">
     <div class="card">
@@ -810,7 +847,7 @@
     <div class="card">
       <div class="card-title"><span class="dot"></span> درباره برنامه</div>
       <p class="muted" style="margin-top:0">
-        <strong style="color:var(--text)">بتن‌لب</strong> — نسخه ۵.۷<br/>
+        <strong style="color:var(--text)">بتن‌لب</strong> — نسخه ۵.۸<br/>
         نرم‌افزار مدیریت نمونه‌های بتن آزمایشگاهی و محاسبه مقاومت فشاری بر اساس نوع و ابعاد قالب.
         داده‌ها به صورت محلی در مرورگر شما (IndexedDB) ذخیره می‌شوند و قابل نصب به عنوان اپلیکیشن موبایل هستند.
       </p>
@@ -829,7 +866,7 @@
 </div>
 
 <!-- Bottom navigation -->
-<nav class="nav" id="bottomNav" style="grid-template-columns:repeat(5, 1fr)">
+<nav class="nav" id="bottomNav" style="grid-template-columns:repeat(6, 1fr)">
   <button data-view="mix">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2v6L4 20a1 1 0 001 1h14a1 1 0 001-1L15 8V2"/><path d="M9 2h6"/><path d="M6.5 14h11"/></svg>
     طرح اختلاط
@@ -845,6 +882,10 @@
   <button data-view="test">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2h6l1 3h-8z"/><path d="M8 5h8l-1 15a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
     تست
+  </button>
+  <button data-view="analysis">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    تحلیل
   </button>
   <button data-view="settings">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
@@ -1182,6 +1223,7 @@ function switchView(v){
   if(v==='register') populatePlanSelect();
   if(v==='list') renderList();
   if(v==='test') renderTestSelector();
+  if(v==='analysis') initAnalysis();
   if(v==='settings'){ renderStorageInfo(); renderSyncPanel(); renderConvSettings(); }
 }
 
@@ -3156,6 +3198,461 @@ $('#conv-save').addEventListener('click', async ()=>{
   updateStrengthDisplay();
 });
 
+/* ============================================================
+ * داشبورد تحلیل — ACI 214R-11 (آمار) + ACI PRC-211.1-22 (مقاومت لازم، w/cm)
+ * ============================================================ */
+const AN = { mix:'__all__', age:'', basis:'cyl', cls:'lab', fc:'' };
+const D2 = { 2:1.128, 3:1.693, 4:2.059 };                       // ACI 214R Table 4.1
+const CTRL_LABEL = ['عالی','خیلی خوب','خوب','متوسط','ضعیف'];
+const CTRL_COLOR = ['#16a34a','#65a30d','#ca8a04','#ea580c','#dc2626'];
+const LIM_S   = { general:[2.8,3.4,4.1,4.8], lab:[1.4,1.7,2.1,2.4] };     // Table 4.3 (MPa) fc' <= 35
+const LIM_V   = { general:[7,9,11,14],        lab:[3.5,4.5,5.0,7.0] };    // Table 4.4 (%)   fc' >= 35
+const LIM_V1  = { general:[3,4,5,6],          lab:[2,3,4,5] };            // within-batch V1 (%)
+const WCM_TABLE = [[0.34,7000],[0.41,6000],[0.48,5000],[0.57,4000],[0.68,3000],[0.82,2000]]; // ACI 211.1 Table 5.3.4 (non-air-entrained), [w/cm, psi]
+const PSI = 0.00689476;
+
+function ctrlIndex(val, lim){ for(let i=0;i<4;i++) if(val < lim[i]) return i; return 4; }
+function ctrlBadge(i){ return `<span class="badge" style="background:${CTRL_COLOR[i]}22;color:${CTRL_COLOR[i]}">${CTRL_LABEL[i]}</span>`; }
+const f1 = x => toFa(Number(x).toFixed(1));
+const f2 = x => toFa(Number(x).toFixed(2));
+const f3 = x => toFa(Number(x).toFixed(3));
+
+function erf(x){
+  const sg = x < 0 ? -1 : 1; x = Math.abs(x);
+  const t = 1/(1 + 0.3275911*x);
+  const y = 1 - (((((1.061405429*t - 1.453152027)*t) + 1.421413741)*t - 0.284496736)*t + 0.254829592)*t*Math.exp(-x*x);
+  return sg*y;
+}
+const normCdf = z => 0.5*(1 + erf(z/Math.SQRT2));
+
+function statsOf(a){
+  const n = a.length;
+  const mean = a.reduce((x,y)=>x+y,0)/n;
+  const s = n > 1 ? Math.sqrt(a.reduce((x,y)=>x+(y-mean)*(y-mean),0)/(n-1)) : 0;
+  return { n, mean, s, V: mean>0 ? s/mean*100 : 0, min: Math.min(...a), max: Math.max(...a) };
+}
+function skewOf(a){
+  const n = a.length; if(n < 3) return null;
+  const st = statsOf(a); if(!(st.s > 0)) return 0;
+  return n/((n-1)*(n-2)) * a.reduce((x,y)=>x+Math.pow((y-st.mean)/st.s,3),0);
+}
+/* ACI 214R Table 5.1 / ACI 211.1 Table 4.7.4.3 (with linear interpolation) */
+function sModFactor(n){
+  if(n >= 30) return 1;
+  if(n < 15) return null;
+  const T = [[15,1.16],[20,1.08],[25,1.03],[30,1.00]];
+  for(let i=1;i<T.length;i++){
+    if(n <= T[i][0]){ const [x0,y0]=T[i-1],[x1,y1]=T[i]; return y0 + (n-x0)*(y1-y0)/(x1-x0); }
+  }
+  return 1;
+}
+/* ACI 211.1 Table 4.7.4.1 (no data) and Table 4.7.4.4 (with s); SI (MPa) */
+function requiredAvg(fc, s, n){
+  const k = sModFactor(n);
+  if(k === null || !(s > 0)){
+    const fcr = fc < 21 ? fc + 7 : (fc <= 35 ? fc + 8.3 : 1.10*fc + 5);
+    return { fcr, noData:true, k:null };
+  }
+  const ks = k*s;
+  const a = fc + 1.34*ks;
+  const b = fc <= 35 ? fc + 2.33*ks - 3.5 : 0.90*fc + 2.33*ks;
+  return { fcr: Math.max(a,b), a, b, k, ks, governs: a >= b ? 'a' : 'b', noData:false };
+}
+function wcmToStrength(wc){           // MPa, linear interpolation in table 5.3.4
+  const T = WCM_TABLE.slice().sort((p,q)=>p[0]-q[0]);
+  if(wc <= T[0][0]) return { v: T[0][1]*PSI, out:'low' };
+  for(let i=1;i<T.length;i++){
+    if(wc <= T[i][0]){ const [w0,s0]=T[i-1],[w1,s1]=T[i]; return { v:(s0 + (wc-w0)*(s1-s0)/(w1-w0))*PSI, out:null }; }
+  }
+  return { v: T[T.length-1][1]*PSI, out:'high' };
+}
+
+/* ---------- data ---------- */
+function strengthOfSample(s, basis){
+  const t = getTestOfKind(s, 'compression');
+  if(!t || !(t.mpa > 0)) return null;
+  if(basis === 'cyl' && s.moldType === 'cube') return t.cylMpa || cubeToCyl(t.mpa);
+  return t.mpa;
+}
+function mixOfSample(s){
+  let m = s.planMixUid ? state.mixes.find(x => x.uid === s.planMixUid) : null;
+  if(!m) m = state.mixes.find(x => (x.code||'').trim().toLowerCase() === (s.planName||'').trim().toLowerCase());
+  return m || null;
+}
+function buildTests(basis){
+  const groups = new Map();
+  state.samples.forEach(s=>{
+    const v = strengthOfSample(s, basis); if(v == null) return;
+    const mix = mixOfSample(s);
+    const mixKey = mix ? mix.uid : 'N:' + s.planName;
+    const b = s.buildDate;
+    const key = mixKey + '|' + s.testAge + '|' + b.jy + '-' + b.jm + '-' + b.jd;
+    let g = groups.get(key);
+    if(!g){ g = { mixKey, mixName: mix ? mix.code : s.planName, mix, age: s.testAge, buildDate: b, ts: jToDate(b).getTime(), vals: [] }; groups.set(key, g); }
+    g.vals.push(v);
+  });
+  const arr = [...groups.values()];
+  arr.forEach(t=>{
+    t.n = t.vals.length;
+    t.mean = t.vals.reduce((a,b)=>a+b,0)/t.n;
+    t.range = t.n >= 2 ? Math.max(...t.vals) - Math.min(...t.vals) : null;
+  });
+  arr.sort((a,b)=> a.ts - b.ts);
+  return arr;
+}
+function withinBatch(tests){
+  const u = tests.filter(t => t.n >= 2 && t.n <= 4);
+  if(!u.length) return null;
+  const Rbar = u.reduce((a,t)=>a+t.range,0)/u.length;
+  const d2 = u.reduce((a,t)=>a+D2[t.n],0)/u.length;
+  const s1 = Rbar/d2;
+  return { count:u.length, Rbar, d2, s1, reliable: u.length >= 10 };
+}
+function pooledS(groupsOfMeans){          // Eq. (4-3) generalized
+  let num = 0, den = 0;
+  groupsOfMeans.forEach(g=>{ if(g.length > 1){ const st = statsOf(g); num += (g.length-1)*st.s*st.s; den += g.length-1; } });
+  return den > 0 ? Math.sqrt(num/den) : 0;
+}
+
+/* ---------- tiny SVG charts ---------- */
+function niceTicks(lo, hi, cnt){
+  const span = hi - lo || 1; const raw = span/cnt;
+  const p = Math.pow(10, Math.floor(Math.log10(raw)));
+  const step = [1,2,2.5,5,10].map(m=>m*p).find(s=>s >= raw) || raw;
+  const t0 = Math.floor(lo/step)*step, out = [];
+  for(let v=t0; v <= hi + step*0.01; v += step) out.push(+v.toFixed(6));
+  return out;
+}
+function lineChart(o){
+  const W = 640, H = o.h || 250, L = 46, R = 14, T = 26, B = 36;
+  let ys = [];
+  o.series.forEach(s => s.pts.forEach(p => ys.push(p[1])));
+  (o.hlines||[]).forEach(h => ys.push(h.y));
+  if(!ys.length) return '';
+  let lo = Math.min(...ys), hi = Math.max(...ys);
+  if(o.zero){ lo = Math.min(lo, 0); }
+  const pad = (hi - lo || 1) * 0.12; lo -= pad; hi += pad;
+  let xs = []; o.series.forEach(s => s.pts.forEach(p => xs.push(p[0])));
+  let xlo = Math.min(...xs), xhi = Math.max(...xs);
+  if(xlo === xhi){ xlo -= 1; xhi += 1; }
+  const X = x => L + (x - xlo)/(xhi - xlo)*(W - L - R);
+  const Y = y => T + (hi - y)/(hi - lo)*(H - T - B);
+  const grid = niceTicks(lo, hi, 5).filter(v => v >= lo && v <= hi).map(v =>
+    `<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="#e3e8ef"/><text x="${L-6}" y="${Y(v)+4}" text-anchor="end" font-size="10" fill="#64748b">${toFa(+v.toFixed(2))}</text>`).join('');
+  const xt = o.xTicks || niceTicks(xlo, xhi, 6).filter(v => Number.isInteger(v) && v >= xlo && v <= xhi);
+  const xgrid = xt.map(v => `<text x="${X(v)}" y="${H-B+14}" text-anchor="middle" font-size="10" fill="#64748b">${toFa(v)}</text>`).join('');
+  const hl = (o.hlines||[]).map(h =>
+    `<line x1="${L}" x2="${W-R}" y1="${Y(h.y)}" y2="${Y(h.y)}" stroke="${h.color}" stroke-width="1.4" ${h.dash ? 'stroke-dasharray="6 4"' : ''}/><text x="${W-R}" y="${Y(h.y)-4}" text-anchor="end" font-size="10" fill="${h.color}">${h.label}</text>`).join('');
+  const ser = o.series.map(s=>{
+    const pts = s.pts.map(p => `${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(1)}`).join(' ');
+    return (s.line ? `<polyline points="${pts}" fill="none" stroke="${s.color}" stroke-width="${s.w||1.8}"/>` : '') +
+      (s.dots ? s.pts.map(p => `<circle cx="${X(p[0]).toFixed(1)}" cy="${Y(p[1]).toFixed(1)}" r="${s.r||3}" fill="${s.fill||'none'}" stroke="${s.color}" stroke-width="1.3"/>`).join('') : '');
+  }).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" dir="ltr" style="width:100%;height:auto;display:block">
+    <text x="${W/2}" y="15" text-anchor="middle" font-size="12" font-weight="600" fill="#1e3a5f">${o.title}</text>
+    ${grid}${xgrid}${hl}${ser}
+    <line x1="${L}" x2="${L}" y1="${T}" y2="${H-B}" stroke="#94a3b8"/><line x1="${L}" x2="${W-R}" y1="${H-B}" y2="${H-B}" stroke="#94a3b8"/>
+    <text x="${W/2}" y="${H-4}" text-anchor="middle" font-size="10" fill="#64748b">${o.xLabel||''}</text>
+    <text x="12" y="${H/2}" transform="rotate(-90 12 ${H/2})" text-anchor="middle" font-size="10" fill="#64748b">${o.yLabel||''}</text>
+  </svg>`;
+}
+function histChart(vals, st, fc, fcr){
+  const W = 640, H = 240, L = 40, R = 14, T = 26, B = 36;
+  const n = vals.length;
+  const bins = Math.max(5, Math.ceil(1 + Math.log2(n)));
+  let lo = Math.min(...vals, fc||Infinity), hi = Math.max(...vals, fcr||-Infinity);
+  const pad = Math.max(st.s*1.5, 1); lo -= pad; hi += pad;
+  const w = (hi - lo)/bins;
+  const counts = new Array(bins).fill(0);
+  vals.forEach(v => { let i = Math.floor((v - lo)/w); if(i >= bins) i = bins-1; counts[i]++; });
+  const normPeak = st.s > 0 ? n*w/(st.s*Math.sqrt(2*Math.PI)) : 0;
+  const ymax = Math.max(...counts, normPeak) * 1.15 || 1;
+  const X = x => L + (x - lo)/(hi - lo)*(W - L - R);
+  const Y = y => T + (1 - y/ymax)*(H - T - B);
+  const bars = counts.map((c,i)=> `<rect x="${X(lo+i*w)+1}" y="${Y(c)}" width="${X(lo+(i+1)*w)-X(lo+i*w)-2}" height="${H-B-Y(c)}" fill="#bcd0e6" stroke="#2c5282"/>`).join('');
+  let curve = '';
+  if(st.s > 0){
+    const pts = [];
+    for(let i=0;i<=60;i++){ const x = lo + (hi-lo)*i/60; const y = n*w/(st.s*Math.sqrt(2*Math.PI))*Math.exp(-0.5*Math.pow((x-st.mean)/st.s,2)); pts.push(`${X(x).toFixed(1)},${Y(y).toFixed(1)}`); }
+    curve = `<polyline points="${pts.join(' ')}" fill="none" stroke="#f97316" stroke-width="2"/>`;
+  }
+  const vl = (x,c,lab) => x == null ? '' : `<line x1="${X(x)}" x2="${X(x)}" y1="${T}" y2="${H-B}" stroke="${c}" stroke-width="1.5" stroke-dasharray="6 4"/><text x="${X(x)+3}" y="${T+10}" font-size="10" fill="${c}">${lab}</text>`;
+  const xt = niceTicks(lo, hi, 6).filter(v => v >= lo && v <= hi).map(v => `<text x="${X(v)}" y="${H-B+14}" text-anchor="middle" font-size="10" fill="#64748b">${toFa(+v.toFixed(1))}</text>`).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" dir="ltr" style="width:100%;height:auto;display:block">
+    <text x="${W/2}" y="15" text-anchor="middle" font-size="12" font-weight="600" fill="#1e3a5f">هیستوگرام و منحنی نرمال (MPa)</text>
+    ${bars}${curve}${vl(st.mean,'#1e3a5f','X')}${vl(fc,'#dc2626',"f'c")}${vl(fcr,'#16a34a',"f'cr")}
+    <line x1="${L}" x2="${W-R}" y1="${H-B}" y2="${H-B}" stroke="#94a3b8"/>${xt}
+    <text x="${W/2}" y="${H-4}" text-anchor="middle" font-size="10" fill="#64748b">مقاومت (MPa)</text>
+  </svg>`;
+}
+
+/* ---------- UI ---------- */
+function anAllTests(){ return buildTests(AN.basis); }
+function initAnalysis(){
+  const tests = anAllTests();
+  const mixSel = $('#an-mix');
+  const names = new Map();
+  tests.forEach(t => names.set(t.mixKey, t.mixName));
+  const cur = AN.mix;
+  mixSel.innerHTML = '<option value="__all__">کل سیستم (همه طرح‌ها)</option>' +
+    [...names.entries()].sort((a,b)=>a[1].localeCompare(b[1],'fa')).map(([k,n])=>`<option value="${escapeAttr(k)}">${escapeHtml(n)}</option>`).join('');
+  mixSel.value = [...names.keys()].includes(cur) ? cur : '__all__';
+  AN.mix = mixSel.value;
+  renderAnalysis();
+}
+function anAgesFor(tests){
+  const m = new Map();
+  tests.forEach(t => m.set(t.age, (m.get(t.age)||0) + 1));
+  return m;
+}
+function renderAnalysis(){
+  const all = anAllTests();
+  const scope = AN.mix === '__all__' ? all : all.filter(t => t.mixKey === AN.mix);
+  const ages = anAgesFor(scope);
+  const ageSel = $('#an-age');
+  const ageKeys = [...ages.keys()].sort((a,b)=>a-b);
+  const mixObj = AN.mix === '__all__' ? null : (scope[0] && scope[0].mix);
+  if(!ageKeys.includes(+AN.age)){
+    const pref = mixObj && mixObj.designAge && ages.has(+mixObj.designAge) ? +mixObj.designAge : (ages.has(28) ? 28 : null);
+    AN.age = pref != null ? pref : (ageKeys.slice().sort((a,b)=>ages.get(b)-ages.get(a))[0] ?? '');
+  }
+  ageSel.innerHTML = ageKeys.map(a => `<option value="${a}">${toFa(a)} روزه (${toFa(ages.get(a))} تست)</option>`).join('') || '<option value="">—</option>';
+  ageSel.value = String(AN.age);
+  $('#an-basis').value = AN.basis;
+  $('#an-class').value = AN.cls;
+  const fcInput = $('#an-fc');
+  if(document.activeElement !== fcInput) fcInput.value = AN.fc;
+  fcInput.placeholder = mixObj && mixObj.fc ? ('از طرح: ' + mixObj.fc) : 'مثلاً ۲۵';
+  renderAnalysisResults(all, scope, mixObj);
+}
+
+function renderAnalysisResults(all, scope, mixObj){
+  const root = $('#anResults');
+  if(!all.length){
+    root.innerHTML = `<div class="empty"><svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><div class="title">هنوز نتیجه‌ی تست فشاری ثبت نشده</div><div>بعد از ثبت چند تست، تحلیل اینجا ظاهر می‌شود</div></div>`;
+    return;
+  }
+  const age = +AN.age;
+  const tests = scope.filter(t => t.age === age).sort((a,b)=>a.ts-b.ts);
+  const isAll = AN.mix === '__all__';
+  const fcManual = parseFloat(toEn(AN.fc));
+  const fc = fcManual > 0 ? fcManual : (mixObj && mixObj.fc > 0 ? mixObj.fc : null);
+  let html = '';
+
+  /* ---- summary table of every mix × age ---- */
+  const rows = [];
+  const byKey = new Map();
+  all.forEach(t => { const k = t.mixKey + '|' + t.age; if(!byKey.has(k)) byKey.set(k, []); byKey.get(k).push(t); });
+  byKey.forEach(arr => {
+    const means = arr.map(t=>t.mean), st = statsOf(means), m = arr[0].mix;
+    let status = '<span class="muted">—</span>';
+    if(arr.length < 3) status = '<span class="badge badge-wait">داده ناکافی</span>';
+    else if(m && m.fc){
+      const rq = requiredAvg(m.fc, st.s, st.n);
+      status = st.mean >= rq.fcr ? '<span class="badge badge-done">جوابگو</span>' : (st.mean >= m.fc ? '<span class="badge badge-wait">بین f\'c و f\'cr</span>' : '<span class="badge" style="background:var(--danger-soft);color:var(--danger)">زیر f\'c</span>');
+    }
+    rows.push({ key: arr[0].mixKey, name: arr[0].mixName, age: arr[0].age, st, m, status });
+  });
+  rows.sort((a,b)=> a.name.localeCompare(b.name,'fa') || a.age - b.age);
+  html += `<div class="card"><div class="card-title"><span class="dot"></span> خلاصه‌ی همه‌ی طرح‌ها</div>
+    <div style="overflow-x:auto"><table class="an-table"><thead><tr><th>طرح</th><th>سن</th><th>تعداد تست</th><th>میانگین</th><th>s</th><th>V٪</th><th>وضعیت</th></tr></thead><tbody>
+    ${rows.map(r=>`<tr data-an-mix="${escapeAttr(r.key)}" data-an-age="${r.age}"><td><strong>${escapeHtml(r.name)}</strong></td><td>${toFa(r.age)}</td><td>${toFa(r.st.n)}</td><td>${f2(r.st.mean)}</td><td>${r.st.n>1?f2(r.st.s):'—'}</td><td>${r.st.n>1?f1(r.st.V):'—'}</td><td>${r.status}</td></tr>`).join('')}
+    </tbody></table></div><div class="hint">برای دیدن تحلیل کامل روی یک ردیف بزنید. «تست» = میانگین نمونه‌های هم‌طرح، هم‌سن و هم‌تاریخ ساخت.</div></div>`;
+
+  if(!tests.length){
+    root.innerHTML = html + '<div class="card muted">برای این انتخاب (طرح و سن) تستی وجود ندارد.</div>';
+    bindAnalysisRows(root); return;
+  }
+
+  const means = tests.map(t=>t.mean);
+  const st = statsOf(means);
+  const specCount = tests.reduce((a,t)=>a+t.n,0);
+  const wb = withinBatch(tests);
+  const sk = skewOf(means);
+  let sUsed = st.s, sNote = '';
+  if(isAll){
+    const groups = new Map();
+    tests.forEach(t => { if(!groups.has(t.mixKey)) groups.set(t.mixKey, []); groups.get(t.mixKey).push(t.mean); });
+    if(groups.size > 1){ sUsed = pooledS([...groups.values()]); sNote = `s ادغام‌شده‌ی ${toFa(groups.size)} طرح (معادله ۴-۳)`; }
+  }
+  const nUsed = st.n;
+  const rq = fc ? requiredAvg(fc, sUsed, nUsed) : null;
+  const scopeName = isAll ? 'کل سیستم' : escapeHtml(tests[0].mixName);
+
+  /* ---- KPIs ---- */
+  html += `<div class="card"><div class="card-title"><span class="dot"></span> آمار — ${scopeName} • ${toFa(age)} روزه</div>
+    <div class="stats" style="grid-template-columns:repeat(4,1fr)">
+      <div class="stat"><div class="n">${toFa(st.n)}</div><div class="l">تست (${toFa(specCount)} نمونه)</div></div>
+      <div class="stat accent"><div class="n">${f2(st.mean)}</div><div class="l">میانگین X (MPa)</div></div>
+      <div class="stat"><div class="n">${st.n>1?f2(sUsed):'—'}</div><div class="l">انحراف معیار s</div></div>
+      <div class="stat warn"><div class="n">${st.n>1?f1(sUsed/st.mean*100):'—'}</div><div class="l">ضریب تغییرات V٪</div></div>
+    </div>
+    <div class="muted" style="line-height:1.9">کمترین: ${f2(st.min)} • بیشترین: ${f2(st.max)} MPa${sNote ? ' • ' + sNote : ''}${sk != null ? ' • چولگی: ' + f2(sk) : ''}</div>`;
+  const warns = [];
+  if(st.n < 3) warns.push('با کمتر از ۳ تست، آمار معنی‌دار نیست؛ تفسیرها فقط جنبه‌ی راهنما دارند.');
+  else if(st.n < 15) warns.push('تعداد تست‌ها کمتر از ۱۵ است؛ طبق ACI 211.1 جدول 4.7.4.1، انحراف معیار قابل اعتماد نیست و مقاومت لازم از جدول «بدون داده» گرفته می‌شود.');
+  else if(st.n < 30) warns.push('تعداد تست‌ها بین ۱۵ و ۲۹ است؛ s با ضریب جدول 5.1 بزرگ می‌شود.');
+  if(age !== 28) warns.push('معیارهای ACI برای مقاومت مشخصه‌ی ۲۸ روزه تعریف شده‌اند؛ برای سن ' + toFa(age) + ' روز فقط جنبه‌ی مقایسه‌ای دارند.');
+  if(isAll && new Set(tests.map(t=>t.mixKey)).size > 1) warns.push('داده‌ی طرح‌های مختلف با هم ترکیب شده است؛ میانگین کل معنی طرح‌محور ندارد. برای ارزیابی کنترل کیفیت، یک طرح را انتخاب کنید.');
+  if(Math.abs(sk||0) > 1) warns.push('چولگی زیاد است؛ فرض توزیع نرمال (ACI 214R §4.2) ممکن است معتبر نباشد.');
+  if(AN.basis === 'cyl' && tests.some(t => state.samples.some(s => s.moldType==='cube'))) warns.push('نتایج مکعبی با ضریب تبدیل فعلی (تنظیمات) به استوانه‌ای تبدیل شده‌اند.');
+  if(warns.length) html += `<div class="an-warn">${warns.map(w=>'⚠️ ' + w).join('<br/>')}</div>`;
+  html += `</div>`;
+
+  /* ---- required average + k factors ---- */
+  if(!fc){
+    html += `<div class="card"><div class="card-title"><span class="dot"></span> مقاومت لازم و ضرایب k</div><p class="muted" style="margin:0">برای محاسبه‌ی مقاومت متوسط لازم، مقدار f'c را در بالا وارد کنید (یا در «طرح اختلاط» ثبت کنید).</p></div>`;
+  } else {
+    const ok = st.mean >= rq.fcr;
+    const pBelow = st.s > 0 ? normCdf((fc - st.mean)/sUsed) : null;
+    const lim = fc <= 35 ? fc - 3.5 : 0.9*fc;
+    const pBelowLim = sUsed > 0 ? normCdf((lim - st.mean)/sUsed) : null;
+    html += `<div class="card"><div class="card-title"><span class="dot"></span> مقاومت لازم و ضرایب k (f'c = ${f1(fc)} MPa)</div>
+      <table class="an-table"><tbody>
+        ${rq.noData ? `
+        <tr><td>روش</td><td>جدول بدون داده (ACI 211.1 جدول 4.7.4.1) — چون n &lt; ۱۵</td></tr>
+        <tr><td><bdi dir="ltr">f'cr = ${fc<21 ? "f'c + 7" : (fc<=35 ? "f'c + 8.3" : "1.10 f'c + 5")}</bdi></td><td><strong>${f2(rq.fcr)} MPa</strong></td></tr>
+        ` : `
+        <tr><td>z (۱٪ مردودی، جدول 5.4)</td><td>۲٫۳۳</td></tr>
+        <tr><td>z/√۳ (میانگین ۳ تست متوالی)</td><td>${f3(2.33/Math.sqrt(3))} ≈ ۱٫۳۴</td></tr>
+        <tr><td>ضریب اصلاح s برای n = ${toFa(nUsed)} (جدول 5.1)</td><td><strong>k = ${f3(rq.k)}</strong></td></tr>
+        <tr><td>s اصلاح‌شده (k·s)</td><td>${f2(rq.ks)} MPa</td></tr>
+        <tr><td>ضریب نهایی ۱٫۳۴k • ۲٫۳۳k</td><td>${f3(1.34*rq.k)} • ${f3(2.33*rq.k)}</td></tr>
+        <tr><td>معیار الف: <bdi dir="ltr">f'c + 1.34·k·s</bdi></td><td>${f2(rq.a)} MPa</td></tr>
+        <tr><td>معیار ب: <bdi dir="ltr">${fc<=35 ? "f'c + 2.33·k·s − 3.5" : "0.90 f'c + 2.33·k·s"}</bdi></td><td>${f2(rq.b)} MPa</td></tr>
+        <tr><td>f'cr = بزرگ‌تر از دو معیار (حاکم: ${rq.governs==='a'?'الف':'ب'})</td><td><strong>${f2(rq.fcr)} MPa</strong></td></tr>`}
+        <tr><td>اضافه‌طراحی <bdi dir="ltr">f'cr − f'c</bdi></td><td>${f2(rq.fcr - fc)} MPa (${f1((rq.fcr/fc-1)*100)}٪)</td></tr>
+        <tr><td>میانگین واقعی X در برابر f'cr</td><td><span class="badge ${ok?'badge-done':'badge-wait'}">${ok?'میانگین کافی است':'میانگین کمتر از لازم'}</span> (${f2(st.mean)} ${ok?'≥':'&lt;'} ${f2(rq.fcr)})</td></tr>
+        ${st.s>0 ? `<tr><td>z واقعی = <bdi dir="ltr">(X − f'c)/s</bdi></td><td>${f2((st.mean-fc)/sUsed)}</td></tr>
+        <tr><td>احتمال تست مجزا کمتر از f'c</td><td>${f1(pBelow*100)}٪</td></tr>
+        <tr><td>احتمال تست مجزا کمتر از ${fc<=35?"f'c − 3.5":"0.90 f'c"} (${f1(lim)} MPa)</td><td>${f2(pBelowLim*100)}٪ <span class="muted">(هدف ≤ ۱٪)</span></td></tr>` : ''}
+      </tbody></table>`;
+    const comp = tests.map((t,i)=>({ t, ind: t.mean < lim, ma: i>=2 ? ((tests[i].mean+tests[i-1].mean+tests[i-2].mean)/3 < fc) : null }));
+    const indFail = comp.filter(c=>c.ind).length, maFail = comp.filter(c=>c.ma === true).length;
+    html += `<div style="margin-top:10px;line-height:2">
+      <strong>بررسی قبولی طبق ACI 318 (ACI 214R §5.3):</strong><br/>
+      • میانگین ۳ تست متوالی ≥ f'c: ${tests.length >= 3 ? (maFail ? `<span class="badge" style="background:var(--danger-soft);color:var(--danger)">${toFa(maFail)} مورد مردود</span>` : '<span class="badge badge-done">همه قبول</span>') : '<span class="muted">حداقل ۳ تست لازم است</span>'}<br/>
+      • هر تست مجزا ≥ ${fc<=35 ? "f'c − 3.5 MPa" : "0.90 f'c"} (${f1(lim)}): ${indFail ? `<span class="badge" style="background:var(--danger-soft);color:var(--danger)">${toFa(indFail)} مورد مردود</span>` : '<span class="badge badge-done">همه قبول</span>'}
+    </div>`;
+    if(st.n >= 3){
+      const pn = [1,2,3,5,7,10,20].filter(n => n <= 100).map(n => `${toFa(n)} تست: ${f1((1-Math.pow(0.985,n))*100)}٪`).join(' • ');
+      html += `<div class="hint" style="margin-top:6px">احتمال حداقل یک تست ناقض معیار ACI 318 (p = ۱٫۵٪، معادله ۶-۱): ${pn}</div>`;
+    }
+    html += `</div>`;
+  }
+
+  /* ---- control level ---- */
+  const base = fc || st.mean;
+  html += `<div class="card"><div class="card-title"><span class="dot"></span> سطح کنترل کیفیت (ACI 214R جدول‌های 4.3 و 4.4)</div><table class="an-table"><tbody>`;
+  if(st.n > 1){
+    if(base <= 35){
+      const i = ctrlIndex(sUsed, LIM_S[AN.cls]);
+      html += `<tr><td>تغییرپذیری کلی (s = ${f2(sUsed)} MPa)</td><td>${ctrlBadge(i)}</td></tr>`;
+    } else {
+      const i = ctrlIndex(sUsed/st.mean*100, LIM_V[AN.cls]);
+      html += `<tr><td>تغییرپذیری کلی (V = ${f1(sUsed/st.mean*100)}٪)</td><td>${ctrlBadge(i)}</td></tr>`;
+    }
+  } else html += `<tr><td>تغییرپذیری کلی</td><td class="muted">حداقل ۲ تست لازم است</td></tr>`;
+  if(wb){
+    const V1 = wb.s1/st.mean*100;
+    const i1 = ctrlIndex(V1, LIM_V1[AN.cls]);
+    html += `<tr><td>میانگین دامنه‌ی داخل-دسته R̄</td><td>${f2(wb.Rbar)} MPa (d₂ = ${f3(wb.d2)})</td></tr>
+      <tr><td>s داخل-دسته = R̄/d₂</td><td>${f2(wb.s1)} MPa</td></tr>
+      <tr><td>V داخل-دسته (V₁ = ${f1(V1)}٪)</td><td>${ctrlBadge(i1)}${wb.reliable ? '' : ' <span class="muted">(کمتر از ۱۰ تست؛ کم‌اعتماد)</span>'}</td></tr>
+      <tr><td>مرجع ASTM C39 §10.1.1 (تک‌اپراتور، آزمایشگاه)</td><td>V ≈ ۲٫۴٪ (۱۵۰×۳۰۰) • ۳٫۲٪ (۱۰۰×۲۰۰)</td></tr>`;
+    if(st.n > 1 && wb.s1 < sUsed){
+      const s2 = Math.sqrt(Math.max(sUsed*sUsed - wb.s1*wb.s1, 0));
+      html += `<tr><td>سهم تولید (بین‌دسته‌ای) s₂ = √(s² − s₁²)</td><td>${f2(s2)} MPa</td></tr>`;
+    }
+  } else html += `<tr><td>تغییرپذیری داخل-دسته</td><td class="muted">برای محاسبه، هر تست باید ۲ تا ۴ نمونه‌ی همراه داشته باشد</td></tr>`;
+  html += `</tbody></table><div class="hint">کلاس عملیات: ${AN.cls==='lab' ? 'بچ‌های آزمایشگاهی' : 'ساخت‌وساز عمومی / کنترل میدانی'} (از بالا قابل تغییر). برای f'c ≤ ۳۵ از s و برای f'c &gt; ۳۵ از V استفاده می‌شود.</div>`;
+  // outlier hints
+  if(wb && wb.reliable){
+    const out = [];
+    tests.forEach(t => { if(t.n >= 3){ t.vals.forEach(v => { const d = Math.abs(v - t.mean); if(d > 3*wb.s1) out.push(`${escapeHtml(t.mixName)} (${jDateToString(t.buildDate)}): ${f2(v)} — انحراف > ۳s₁ (قابل حذف طبق ACI 214R §6.3)`); else if(d > 2*wb.s1) out.push(`${escapeHtml(t.mixName)} (${jDateToString(t.buildDate)}): ${f2(v)} — انحراف > ۲s₁ (بررسی شود)`); }); } });
+    if(out.length) html += `<div class="an-warn" style="margin-top:8px">${out.join('<br/>')}</div>`;
+  }
+  html += `</div>`;
+
+  /* ---- w/cm ---- */
+  if(!isAll && mixObj && mixObj.wc > 0){
+    const est = wcmToStrength(mixObj.wc);
+    html += `<div class="card"><div class="card-title"><span class="dot"></span> مقایسه با جدول w/cm در ACI 211.1</div>
+      <div style="line-height:2">w/cm طرح: <strong>${f2(mixObj.wc)}</strong> → مقاومت ۲۸ روزه‌ی تخمینی جدول 5.3.4 (بدون هوا): <strong>${f1(est.v)} MPa</strong>${est.out ? ' <span class="muted">(خارج از محدوده‌ی جدول)</span>' : ''}<br/>
+      ${age === 28 ? `مقاومت اندازه‌گیری‌شده ${f1(st.mean)} MPa = <strong>${f2(st.mean/est.v)}</strong> برابر مقدار جدول <span class="muted">(مقادیر جدول محافظه‌کارانه‌اند)</span>` : '<span class="muted">برای مقایسه، سن ۲۸ روزه را انتخاب کنید.</span>'}</div></div>`;
+  }
+  if(isAll){
+    const pts = [];
+    byKey.forEach(arr => { const m = arr[0].mix; if(m && m.wc > 0 && arr[0].age === age) pts.push([m.wc, statsOf(arr.map(t=>t.mean)).mean]); });
+    if(pts.length >= 3){
+      const xs = pts.map(p=>p[0]), ys = pts.map(p=>Math.log(p[1]));
+      const mx = xs.reduce((a,b)=>a+b)/xs.length, my = ys.reduce((a,b)=>a+b)/ys.length;
+      const sxx = xs.reduce((a,x)=>a+(x-mx)*(x-mx),0), sxy = xs.reduce((a,x,i)=>a+(x-mx)*(ys[i]-my),0);
+      if(sxx > 0){
+        const b = sxy/sxx, a0 = my - b*mx;
+        const ssTot = ys.reduce((a,y)=>a+(y-my)*(y-my),0), ssRes = ys.reduce((a,y,i)=>a+Math.pow(y-(a0+b*xs[i]),2),0);
+        const r2 = ssTot > 0 ? 1 - ssRes/ssTot : 1;
+        html += `<div class="card"><div class="card-title"><span class="dot"></span> رابطه‌ی مقاومت با w/cm از داده‌های شما (${toFa(pts.length)} طرح)</div>
+          <div style="line-height:2">fc = A·e<sup>−B·(w/cm)</sup> با A = <strong>${f1(Math.exp(a0))}</strong> MPa و B = <strong>${f2(-b)}</strong> • R² = ${f2(r2)}<br/><span class="muted">این برازش تجربی از میانگین ${toFa(age)} روزه‌ی طرح‌هاست و با کم بودن تعداد طرح‌ها نباید برای پیش‌بینی بیرون از بازه‌ی داده‌ها استفاده شود.</span></div></div>`;
+      }
+    }
+  }
+
+  /* ---- charts ---- */
+  const idx = tests.map((t,i)=>i+1);
+  const indivPts = []; tests.forEach((t,i)=> t.vals.forEach(v => indivPts.push([i+1, v])));
+  const hl = []; if(fc) hl.push({ y: fc, label: "f'c", color:'#dc2626' }); if(rq) hl.push({ y: rq.fcr, label: "f'cr", color:'#16a34a', dash:true });
+  const maW = 5, mavg = [];
+  for(let i = maW-1; i < tests.length; i++) mavg.push([i+1, means.slice(i-maW+1, i+1).reduce((a,b)=>a+b,0)/maW]);
+  const target = rq ? rq.fcr : st.mean;
+  let cum = 0; const cusum = [[0,0]];
+  means.forEach((v,i)=>{ cum += v - target; cusum.push([i+1, cum]); });
+  const rangeTests = tests.map((t,i)=>({ r:t.range, i:i+1 })).filter(x => x.r != null);
+  const mrange = [];
+  for(let j = 9; j < rangeTests.length; j++){ const w = rangeTests.slice(j-9, j+1); mrange.push([w[w.length-1].i, w.reduce((a,x)=>a+x.r,0)/10]); }
+  html += `<div class="chart-grid">
+    <div class="card"><div class="chart-box">${lineChart({ title:'نمودار تست‌ها به ترتیب ساخت (MPa)', xLabel:'شماره‌ی تست', yLabel:'MPa', hlines:hl, series:[
+      { pts: indivPts, dots:true, color:'#2c5282' }, { pts: idx.map((x,i)=>[x, means[i]]), line:true, dots:true, color:'#f97316', fill:'#f97316', r:2.5 } ] })}</div>
+      <div class="hint">دایره‌ها: نمونه‌های تکی • خط نارنجی: میانگین هر تست (ACI 214R شکل 6.1a)</div></div>
+    <div class="card"><div class="chart-box">${histChart(means, st, fc, rq && rq.fcr)}</div></div>
+    ${mavg.length ? `<div class="card"><div class="chart-box">${lineChart({ title:'میانگین متحرک ۵ تست (شکل 6.1b)', xLabel:'شماره‌ی تست', yLabel:'MPa', hlines:hl, series:[{ pts:mavg, line:true, dots:true, color:'#1e3a5f', fill:'#1e3a5f', r:2.5 }] })}</div></div>` : `<div class="card muted">میانگین متحرک ۵ تست: حداقل ۵ تست لازم است.</div>`}
+    <div class="card"><div class="chart-box">${lineChart({ title:'مجموع تجمعی CUSUM (هدف: ' + (rq ? "f'cr" : 'میانگین') + ')', xLabel:'شماره‌ی تست', yLabel:'Σ(X − هدف)', zero:true, hlines:[{ y:0, label:'۰', color:'#94a3b8', dash:true }], series:[{ pts:cusum, line:true, dots:true, color:'#7c3aed', fill:'#7c3aed', r:2.5 }] })}</div>
+      <div class="hint">شیب نزولی پایدار = افت میانگین نسبت به هدف؛ شیب صعودی = بالاتر از هدف (ACI 214R §6.6.2)</div></div>
+    ${mrange.length ? `<div class="card"><div class="chart-box">${lineChart({ title:'میانگین متحرک دامنه‌ی ۱۰ تست (شکل 6.1c)', xLabel:'شماره‌ی تست', yLabel:'R (MPa)', zero:true, hlines: fc ? [{ y: 0.05*(rq?rq.fcr:fc)*(tests[0].n===3?1.693:1.128), label:'حد V₁=۵٪', color:'#dc2626', dash:true }] : [], series:[{ pts:mrange, line:true, dots:true, color:'#0891b2', fill:'#0891b2', r:2.5 }] })}</div></div>` : ''}
+    ${isAll || !mixObj ? '' : ''}
+  </div>`;
+
+  /* ---- strength development (all ages of the selected scope) ---- */
+  const devMap = new Map();
+  scope.forEach(t => { if(!devMap.has(t.age)) devMap.set(t.age, []); devMap.get(t.age).push(t.mean); });
+  const devPts = [...devMap.entries()].sort((a,b)=>a[0]-b[0]).map(([a,v]) => [a, statsOf(v).mean]);
+  if(devPts.length >= 2){
+    const m28 = devPts.find(p=>p[0]===28);
+    html += `<div class="card"><div class="chart-box">${lineChart({ title:'رشد مقاومت با سن — ' + (isAll ? 'کل سیستم' : escapeHtml(tests[0].mixName)), xLabel:'سن (روز)', yLabel:'میانگین (MPa)', xTicks: devPts.map(p=>p[0]), series:[{ pts:devPts, line:true, dots:true, color:'#16a34a', fill:'#16a34a', r:3.5 }] })}</div>
+      <div class="hint">${m28 ? devPts.filter(p=>p[0]!==28).map(p => `نسبت ${toFa(p[0])} روزه به ۲۸ روزه: ${f2(p[1]/m28[1])}`).join(' • ') : 'برای محاسبه‌ی نسبت‌ها، تست ۲۸ روزه لازم است.'}</div></div>`;
+  }
+
+  root.innerHTML = html;
+  bindAnalysisRows(root);
+}
+function bindAnalysisRows(root){
+  $$('#anResults tr[data-an-mix]').forEach(tr => {
+    tr.style.cursor = 'pointer';
+    tr.onclick = () => {
+      AN.mix = tr.dataset.anMix; AN.age = tr.dataset.anAge; AN.fc = '';
+      $('#an-mix').value = AN.mix;
+      renderAnalysis();
+      window.scrollTo({ top: $('#an-mix').getBoundingClientRect().top + window.scrollY - 80, behavior:'smooth' });
+    };
+  });
+}
+$('#an-mix').addEventListener('change', e => { AN.mix = e.target.value; AN.age = ''; AN.fc = ''; renderAnalysis(); });
+$('#an-age').addEventListener('change', e => { AN.age = e.target.value; renderAnalysis(); });
+$('#an-basis').addEventListener('change', e => { AN.basis = e.target.value; initAnalysis(); });
+$('#an-class').addEventListener('change', e => { AN.cls = e.target.value; renderAnalysis(); });
+$('#an-fc').addEventListener('input', e => { AN.fc = e.target.value; renderAnalysis(); });
+
+
 /* ---------- Navigation ---------- */
 $$('.nav button').forEach(b => b.addEventListener('click', ()=> switchView(b.dataset.view)));
 
@@ -3221,7 +3718,7 @@ if('serviceWorker' in navigator){
   try{
     // Deep-link support for manifest shortcuts (./?view=list etc.)
     const v0 = new URLSearchParams(location.search).get('view');
-    if(v0 && ['mix','register','list','test','settings'].includes(v0)){
+    if(v0 && ['mix','register','list','test','analysis','settings'].includes(v0)){
       setTimeout(()=>{ try{ if(typeof switchView === 'function') switchView(v0); }catch(e){} }, 250);
     }
 
