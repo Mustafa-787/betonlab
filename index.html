@@ -422,6 +422,13 @@
     }
 
     #view-analysis .card-title { text-transform: none; }
+    .md-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; color: var(--text-muted); margin-bottom: 8px; }
+    .md-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-inline-end: 5px; vertical-align: middle; }
+    .md-comp { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+    .md-comp .an-table { flex: 1; min-width: 240px; }
+    .md-dot { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-inline-end: 8px; vertical-align: middle; }
+    .md-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .md-chips span { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 6px 10px; font-size: 12px; }
     .an-table { width: 100%; border-collapse: collapse; font-size: 13px; }
     .an-table th { text-align: start; color: var(--text-muted); font-weight: 500; font-size: 12px; padding: 6px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
     .an-table td { padding: 8px; border-bottom: 1px dashed var(--border); font-variant-numeric: tabular-nums; vertical-align: top; }
@@ -528,6 +535,12 @@
             <label>مقدار/درصد افزودنی</label>
             <input class="input" id="m-admixDosage" type="text" placeholder="مثلاً 1٪ وزن سیمان"/>
           </div>
+        </div>
+
+        <div class="field">
+          <label>اجزای اضافی (اختیاری)</label>
+          <textarea class="textarea" id="m-extras" placeholder="هر خط یک جزء، مثلاً:&#10;پودر آجر: 40&#10;نانوسیلیس: 5&#10;الیاف PP: 0.9" maxlength="400"></textarea>
+          <div class="hint">با فرمت «نام: مقدار kg/m³». در نمودار ترکیب جرمی و درصدها در «جزئیات طرح» حساب می‌شوند.</div>
         </div>
 
         <div class="field">
@@ -757,6 +770,15 @@
     </div>
   </section>
 
+  <!-- VIEW: MIX DETAIL -->
+  <section id="view-mixdetail" class="view">
+    <button type="button" class="btn btn-outline btn-sm" id="mdBack" style="margin-bottom:12px">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      بازگشت
+    </button>
+    <div id="mdBody"></div>
+  </section>
+
   <!-- VIEW: ANALYSIS -->
   <section id="view-analysis" class="view">
     <div class="card">
@@ -847,7 +869,7 @@
     <div class="card">
       <div class="card-title"><span class="dot"></span> درباره برنامه</div>
       <p class="muted" style="margin-top:0">
-        <strong style="color:var(--text)">بتن‌لب</strong> — نسخه ۵.۸<br/>
+        <strong style="color:var(--text)">بتن‌لب</strong> — نسخه ۵.۹<br/>
         نرم‌افزار مدیریت نمونه‌های بتن آزمایشگاهی و محاسبه مقاومت فشاری بر اساس نوع و ابعاد قالب.
         داده‌ها به صورت محلی در مرورگر شما (IndexedDB) ذخیره می‌شوند و قابل نصب به عنوان اپلیکیشن موبایل هستند.
       </p>
@@ -1217,9 +1239,10 @@ function switchView(v){
   state.view = v;
   $$('.view').forEach(el => el.classList.remove('active'));
   $('#view-' + v).classList.add('active');
-  $$('.nav button').forEach(b => b.classList.toggle('active', b.dataset.view===v));
+  $$('.nav button').forEach(b => b.classList.toggle('active', b.dataset.view===v || (v==='mixdetail' && b.dataset.view==='mix')));
   window.scrollTo({top:0, behavior:'smooth'});
   if(v==='mix') renderMixList();
+  if(v==='mixdetail') renderMixDetail();
   if(v==='register') populatePlanSelect();
   if(v==='list') renderList();
   if(v==='test') renderTestSelector();
@@ -1525,6 +1548,7 @@ function resetMixForm(){
   $('#m-fineAgg').value = '';
   $('#m-admixType').value = '';
   $('#m-admixDosage').value = '';
+  $('#m-extras').value = '';
   $('#m-notes').value = '';
   $('#saveMixBtn').innerHTML = `
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
@@ -1562,6 +1586,7 @@ $('#mixForm').addEventListener('submit', async (e)=>{
       fineAgg: numOrNull($('#m-fineAgg').value),
       admixType: $('#m-admixType').value.trim(),
       admixDosage: $('#m-admixDosage').value.trim(),
+      extras: parseExtras($('#m-extras').value),
       notes: $('#m-notes').value.trim(),
       createdAt: Date.now(),
     };
@@ -1606,6 +1631,7 @@ function fillMixFormForEdit(m){
   $('#m-fineAgg').value = m.fineAgg ?? '';
   $('#m-admixType').value = m.admixType || '';
   $('#m-admixDosage').value = m.admixDosage || '';
+  $('#m-extras').value = extrasToText(m.extras);
   $('#m-notes').value = m.notes || '';
   $('#saveMixBtn').innerHTML = `
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
@@ -1617,7 +1643,9 @@ function fillMixFormForEdit(m){
 async function handleMixAction(act, uid){
   const m = state.mixes.find(x => x.uid === uid);
   if(!m) return;
-  if(act === 'edit'){
+  if(act === 'detail'){
+    openMixDetail(uid, 'mix');
+  } else if(act === 'edit'){
     fillMixFormForEdit(m);
   } else if(act === 'delete'){
     const usedCount = state.samples.filter(s => s.planMixUid === m.uid).length;
@@ -1656,6 +1684,7 @@ function renderMixList(){
     if(m.coarseAgg) specs.push(`شن: ${toFa(m.coarseAgg)} kg/m³`);
     if(m.fineAgg) specs.push(`ماسه: ${toFa(m.fineAgg)} kg/m³`);
     if(m.admixType) specs.push(`افزودنی: ${escapeHtml(m.admixType)}${m.admixDosage ? ' ('+escapeHtml(m.admixDosage)+')' : ''}`);
+    if(m.extras && m.extras.length) m.extras.forEach(e => specs.push(`${escapeHtml(e.name)}: ${toFa(e.kg)} kg/m³`));
     return `
       <div class="sample">
         <div class="sample-head">
@@ -1668,6 +1697,7 @@ function renderMixList(){
         ${specs.length ? `<div class="muted" style="line-height:1.9">${specs.join(' • ')}</div>` : '<div class="muted">جزئیات فنی ثبت نشده</div>'}
         ${m.notes ? `<div style="margin-top:8px"><div class="muted" style="font-size:12px">یادداشت</div><div style="font-size:13px">${escapeHtml(m.notes)}</div></div>` : ''}
         <div class="sample-actions" style="margin-top:10px">
+          <button class="btn btn-accent btn-sm" data-mix-act="detail" data-uid="${escapeAttr(m.uid)}">جزئیات</button>
           <button class="btn btn-outline btn-sm" data-mix-act="edit" data-uid="${escapeAttr(m.uid)}">ویرایش</button>
           <button class="btn btn-danger btn-sm" data-mix-act="delete" data-uid="${escapeAttr(m.uid)}">حذف</button>
         </div>
@@ -2358,6 +2388,7 @@ function buildTxt(samples, mixes){
       if(m.coarseAgg)lines.push('شن (درشت‌دانه): ' + m.coarseAgg + ' kg/m³');
       if(m.fineAgg)  lines.push('ماسه (ریزدانه): ' + m.fineAgg + ' kg/m³');
       if(m.admixType)lines.push('افزودنی:        ' + m.admixType + (m.admixDosage ? ' — ' + m.admixDosage : ''));
+      if(m.extras && m.extras.length) m.extras.forEach(e => lines.push('جزء اضافی:      ' + e.name + ' — ' + e.kg + ' kg/m³'));
       if(m.notes)    lines.push('یادداشت:        ' + m.notes);
       lines.push('');
     });
@@ -3348,7 +3379,7 @@ function lineChart(o){
     return (s.line ? `<polyline points="${pts}" fill="none" stroke="${s.color}" stroke-width="${s.w||1.8}"/>` : '') +
       (s.dots ? s.pts.map(p => `<circle cx="${X(p[0]).toFixed(1)}" cy="${Y(p[1]).toFixed(1)}" r="${s.r||3}" fill="${s.fill||'none'}" stroke="${s.color}" stroke-width="1.3"/>`).join('') : '');
   }).join('');
-  return `<svg viewBox="0 0 ${W} ${H}" dir="ltr" style="width:100%;height:auto;display:block">
+  return `<svg viewBox="0 0 ${W} ${H}" dir="ltr" style="width:100%;height:auto;display:block;direction:ltr">
     <text x="${W/2}" y="15" text-anchor="middle" font-size="12" font-weight="600" fill="#1e3a5f">${o.title}</text>
     ${grid}${xgrid}${hl}${ser}
     <line x1="${L}" x2="${L}" y1="${T}" y2="${H-B}" stroke="#94a3b8"/><line x1="${L}" x2="${W-R}" y1="${H-B}" y2="${H-B}" stroke="#94a3b8"/>
@@ -3378,7 +3409,7 @@ function histChart(vals, st, fc, fcr){
   }
   const vl = (x,c,lab) => x == null ? '' : `<line x1="${X(x)}" x2="${X(x)}" y1="${T}" y2="${H-B}" stroke="${c}" stroke-width="1.5" stroke-dasharray="6 4"/><text x="${X(x)+3}" y="${T+10}" font-size="10" fill="${c}">${lab}</text>`;
   const xt = niceTicks(lo, hi, 6).filter(v => v >= lo && v <= hi).map(v => `<text x="${X(v)}" y="${H-B+14}" text-anchor="middle" font-size="10" fill="#64748b">${toFa(+v.toFixed(1))}</text>`).join('');
-  return `<svg viewBox="0 0 ${W} ${H}" dir="ltr" style="width:100%;height:auto;display:block">
+  return `<svg viewBox="0 0 ${W} ${H}" dir="ltr" style="width:100%;height:auto;display:block;direction:ltr">
     <text x="${W/2}" y="15" text-anchor="middle" font-size="12" font-weight="600" fill="#1e3a5f">هیستوگرام و منحنی نرمال (MPa)</text>
     ${bars}${curve}${vl(st.mean,'#1e3a5f','X')}${vl(fc,'#dc2626',"f'c")}${vl(fcr,'#16a34a',"f'cr")}
     <line x1="${L}" x2="${W-R}" y1="${H-B}" y2="${H-B}" stroke="#94a3b8"/>${xt}
@@ -3455,8 +3486,8 @@ function renderAnalysisResults(all, scope, mixObj){
   });
   rows.sort((a,b)=> a.name.localeCompare(b.name,'fa') || a.age - b.age);
   html += `<div class="card"><div class="card-title"><span class="dot"></span> خلاصه‌ی همه‌ی طرح‌ها</div>
-    <div style="overflow-x:auto"><table class="an-table"><thead><tr><th>طرح</th><th>سن</th><th>تعداد تست</th><th>میانگین</th><th>s</th><th>V٪</th><th>وضعیت</th></tr></thead><tbody>
-    ${rows.map(r=>`<tr data-an-mix="${escapeAttr(r.key)}" data-an-age="${r.age}"><td><strong>${escapeHtml(r.name)}</strong></td><td>${toFa(r.age)}</td><td>${toFa(r.st.n)}</td><td>${f2(r.st.mean)}</td><td>${r.st.n>1?f2(r.st.s):'—'}</td><td>${r.st.n>1?f1(r.st.V):'—'}</td><td>${r.status}</td></tr>`).join('')}
+    <div style="overflow-x:auto"><table class="an-table"><thead><tr><th>طرح</th><th>سن</th><th>تعداد تست</th><th>میانگین</th><th>s</th><th>V٪</th><th>وضعیت</th><th></th></tr></thead><tbody>
+    ${rows.map(r=>`<tr data-an-mix="${escapeAttr(r.key)}" data-an-age="${r.age}"><td><strong>${escapeHtml(r.name)}</strong></td><td>${toFa(r.age)}</td><td>${toFa(r.st.n)}</td><td>${f2(r.st.mean)}</td><td>${r.st.n>1?f2(r.st.s):'—'}</td><td>${r.st.n>1?f1(r.st.V):'—'}</td><td>${r.status}</td><td>${r.m ? `<button class="btn btn-outline btn-sm" data-md="${escapeAttr(r.m.uid)}">جزئیات</button>` : ''}</td></tr>`).join('')}
     </tbody></table></div><div class="hint">برای دیدن تحلیل کامل روی یک ردیف بزنید. «تست» = میانگین نمونه‌های هم‌طرح، هم‌سن و هم‌تاریخ ساخت.</div></div>`;
 
   if(!tests.length){
@@ -3636,6 +3667,7 @@ function renderAnalysisResults(all, scope, mixObj){
   bindAnalysisRows(root);
 }
 function bindAnalysisRows(root){
+  $$('#anResults [data-md]').forEach(b => { b.onclick = (e) => { e.stopPropagation(); openMixDetail(b.dataset.md, 'analysis'); }; });
   $$('#anResults tr[data-an-mix]').forEach(tr => {
     tr.style.cursor = 'pointer';
     tr.onclick = () => {
@@ -3651,6 +3683,182 @@ $('#an-age').addEventListener('change', e => { AN.age = e.target.value; renderAn
 $('#an-basis').addEventListener('change', e => { AN.basis = e.target.value; initAnalysis(); });
 $('#an-class').addEventListener('change', e => { AN.cls = e.target.value; renderAnalysis(); });
 $('#an-fc').addEventListener('input', e => { AN.fc = e.target.value; renderAnalysis(); });
+
+
+/* ============================================================
+ * صفحه‌ی جزئیات طرح اختلاط: مقاومت بر حسب سن در برابر f'c / f'cr + ترکیب جرمی
+ * ============================================================ */
+const MD = { uid:null, from:'mix', allAges:false };
+const COMP_COLORS = ['#2a78d6','#898781','#eb6834','#eda100','#7c3aed','#0891b2','#16a34a','#db2777','#65a30d','#b45309'];
+const VERDICT = { ok:'#16a34a', mid:'#d97706', bad:'#dc2626', neutral:'#94a3b8' };
+
+/* «نام: مقدار» در هر خط، مثلاً «پودر آجر: 40» */
+function parseExtras(text){
+  const out = [];
+  String(text || '').split(/\n|،|;/).forEach(line => {
+    line = toEn(line).replace(/٫/g,'.').trim();
+    if(!line) return;
+    const m = line.match(/^(.+?)\s*[:=：]\s*([0-9]+(?:\.[0-9]+)?)\s*(?:kg.*)?$/i) || line.match(/^(.+?)\s+([0-9]+(?:\.[0-9]+)?)\s*(?:kg.*)?$/i);
+    if(m && +m[2] > 0) out.push({ name: m[1].trim(), kg: +m[2] });
+  });
+  return out;
+}
+function extrasToText(arr){ return (arr || []).map(e => e.name + ': ' + e.kg).join('\n'); }
+
+function mixComponents(m){
+  const c = [];
+  if(m.water > 0) c.push({ name:'آب', kg:m.water });
+  if(m.cement > 0) c.push({ name:'سیمان', kg:m.cement });
+  if(m.coarseAgg > 0) c.push({ name:'درشت‌دانه', kg:m.coarseAgg });
+  if(m.fineAgg > 0) c.push({ name:'ریزدانه', kg:m.fineAgg });
+  (m.extras || []).forEach(e => c.push({ name:e.name, kg:e.kg, extra:true }));
+  c.forEach((p,i) => p.color = COMP_COLORS[i % COMP_COLORS.length]);
+  return c;
+}
+function donutSvg(parts, total){
+  const r = 55, C = 2*Math.PI*r; let off = 0;
+  const circles = parts.map(p => {
+    const len = p.kg/total*C;
+    const el = `<circle cx="80" cy="80" r="${r}" fill="none" stroke="${p.color}" stroke-width="26" stroke-dasharray="${len.toFixed(2)} ${(C-len).toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}"/>`;
+    off += len; return el;
+  }).join('');
+  return `<svg viewBox="0 0 160 160" width="170" height="170" role="img" aria-label="ترکیب جرمی مخلوط"><g transform="rotate(-90 80 80)">${circles}</g>
+    <text x="80" y="80" text-anchor="middle" font-size="18" font-weight="700" fill="#1e3a5f">${toFa(Math.round(total))}</text>
+    <text x="80" y="97" text-anchor="middle" font-size="10" fill="#64748b">kg/m³</text></svg>`;
+}
+
+function strengthAgeChart(specs, ages, refs, ymaxHint, colorFn){
+  const W = 640, H = 280, L = 46, R = 14, T = 28, B = 44;
+  const ymax = Math.max(ymaxHint, ...specs.map(s=>s.v)) * 1.12 || 10;
+  const Y = v => T + (1 - v/ymax)*(H - T - B);
+  const cw = (W - L - R)/ages.length;
+  const cx = i => L + (i + 0.5)*cw;
+  const grid = niceTicks(0, ymax, 5).filter(v => v >= 0 && v <= ymax).map(v =>
+    `<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="#e3e8ef"/><text x="${L-6}" y="${Y(v)+4}" text-anchor="end" font-size="10" fill="#64748b">${toFa(+v.toFixed(1))}</text>`).join('');
+  const refl = refs.map(r2 => `<line x1="${L}" x2="${W-R}" y1="${Y(r2.y)}" y2="${Y(r2.y)}" stroke="${r2.color}" stroke-width="1.5" stroke-dasharray="${r2.dash || '7 4'}"/><text x="${L+6}" y="${Y(r2.y)-4}" text-anchor="start" font-size="10" font-weight="600" fill="${r2.color}" style="paint-order:stroke;stroke:#fff;stroke-width:3px">${r2.label}</text>`).join('');
+  const xl = ages.map((a,i) => `<text x="${cx(i)}" y="${H-B+16}" text-anchor="middle" font-size="11" fill="#334155">\u200F${toFa(a)} روزه</text>`).join('');
+  let idx = 0;
+  const dots = ages.map((a,i) => {
+    const group = specs.filter(s => s.age === a);
+    const step = Math.min(18, (cw - 20)/Math.max(group.length, 1));
+    return group.map((s,k) => {
+      const x = cx(i) + (k - (group.length-1)/2)*step;
+      const el = `<circle data-i="${specs.indexOf(s)}" cx="${x.toFixed(1)}" cy="${Y(s.v).toFixed(1)}" r="6" fill="${colorFn(s)}" stroke="#fff" stroke-width="2" style="cursor:pointer"><title>${toFa(s.v.toFixed(2))} MPa</title></circle>`;
+      idx++; return el;
+    }).join('');
+  }).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" dir="ltr" style="width:100%;height:auto;display:block;direction:ltr" role="img" aria-label="مقاومت نمونه‌ها بر حسب سن">
+    ${grid}<line x1="${L}" x2="${W-R}" y1="${H-B}" y2="${H-B}" stroke="#94a3b8"/>${refl}${dots}${xl}
+    <text x="12" y="${H/2}" transform="rotate(-90 12 ${H/2})" text-anchor="middle" font-size="10" fill="#64748b">مقاومت (MPa)</text></svg>`;
+}
+
+function openMixDetail(uid, from){
+  MD.uid = uid; MD.from = from || 'mix';
+  switchView('mixdetail');
+}
+
+function renderMixDetail(){
+  const body = $('#mdBody');
+  const m = state.mixes.find(x => x.uid === MD.uid);
+  if(!m){ body.innerHTML = '<div class="card muted">طرح مورد نظر پیدا نشد.</div>'; return; }
+  const fc = m.fc > 0 ? m.fc : null;
+  const designAge = m.designAge > 0 ? m.designAge : 28;
+  const indMin = fc ? (fc <= 35 ? fc - 3.5 : 0.9*fc) : null;
+
+  const specs = [];
+  state.samples.forEach(s => {
+    const lm = mixOfSample(s);
+    if(!lm || lm.uid !== m.uid) return;
+    const v = strengthOfSample(s, 'cyl');
+    if(v == null) return;
+    specs.push({ v, age: s.testAge, name: s.sampleName || ('نمونه ' + s.sampleNo), no: s.sampleNo, total: s.totalCount, build: s.buildDate, cube: s.moldType === 'cube' });
+  });
+  const ages = [...new Set(specs.map(s => s.age))].sort((a,b) => a-b);
+
+  /* f'cr از همین داده‌ها (در سن طرح) یا جدول بدون داده */
+  const tests = buildTests('cyl').filter(t => t.mixKey === m.uid && t.age === designAge);
+  const means = tests.map(t => t.mean);
+  const st = means.length ? statsOf(means) : null;
+  const rq = fc ? requiredAvg(fc, st && st.n > 1 ? st.s : 0, means.length) : null;
+
+  const verdict = s => {
+    if(!fc) return VERDICT.neutral;
+    if(!MD.allAges && s.age < designAge) return VERDICT.neutral;
+    return s.v >= fc ? VERDICT.ok : (s.v >= indMin ? VERDICT.mid : VERDICT.bad);
+  };
+
+  let html = `<div class="card"><div class="row-between" style="flex-wrap:wrap;gap:8px">
+    <div><div class="muted">جزئیات یک طرح اختلاط</div><div style="font-size:22px;font-weight:700;color:var(--primary)">${escapeHtml(m.code)}</div></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      ${fc ? `<span class="badge" style="background:var(--primary-soft);color:var(--primary)">f'c = ${f1(fc)} MPa</span>` : ''}
+      ${rq ? `<span class="badge badge-done">f'cr = ${f1(rq.fcr)} MPa</span>` : ''}
+      <span class="badge badge-wait">سن طرح: ${toFa(designAge)} روز</span>
+    </div></div>
+    ${m.notes ? `<div class="muted" style="margin-top:8px">${escapeHtml(m.notes)}</div>` : ''}
+  </div>`;
+
+  /* ---- chart ---- */
+  html += `<div class="card"><div class="card-title"><span class="dot"></span> مقاومت نمونه‌ها بر حسب سن</div>`;
+  if(!specs.length){
+    html += `<div class="empty" style="padding:20px"><div class="title">هنوز نمونه‌ای با نتیجه‌ی تست فشاری برای این طرح ثبت نشده</div></div>`;
+  } else {
+    const refs = [];
+    if(fc) refs.push({ y: fc, color:'#2a78d6', label: "f'c " + f1(fc) });
+    if(rq) refs.push({ y: rq.fcr, color:'#0ca30c', label: "f'cr " + f1(rq.fcr) });
+    if(indMin) refs.push({ y: indMin, color:'#d97706', dash:'3 4', label: 'حداقل تکی ' + f1(indMin) });
+    html += `<div class="md-legend">
+        <span><i style="background:${VERDICT.ok}"></i> قبول (<bdi dir="ltr">≥ f'c</bdi>)</span>
+        <span><i style="background:${VERDICT.mid}"></i> بین حداقل تکی و <bdi dir="ltr">f'c</bdi></span>
+        <span><i style="background:${VERDICT.bad}"></i> مردود (کمتر از حداقل تکی)</span>
+        <span><i style="background:${VERDICT.neutral}"></i> سن زودتر از سن طرح (بدون قضاوت)</span></div>
+      <div class="chart-box">${strengthAgeChart(specs, ages, refs, Math.max(fc||0, rq?rq.fcr:0), verdict)}</div>
+      <div id="mdInfo" class="muted" style="min-height:20px;margin-top:6px">برای دیدن مشخصات هر نمونه روی نقطه بزنید.</div>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px"><input type="checkbox" id="mdAllAges" ${MD.allAges ? 'checked' : ''}/> رنگ‌بندی برای همه‌ی سن‌ها (حتی زودتر از سن طرح)</label>`;
+    if(fc){
+      const atDesign = specs.filter(s => s.age >= designAge);
+      const c = { ok:0, mid:0, bad:0 };
+      atDesign.forEach(s => { c[s.v >= fc ? 'ok' : (s.v >= indMin ? 'mid' : 'bad')]++; });
+      html += `<div class="hint" style="margin-top:6px">نمونه‌های سن ${toFa(designAge)} روز و بالاتر: <strong style="color:${VERDICT.ok}">${toFa(c.ok)} قبول</strong> • <strong style="color:${VERDICT.mid}">${toFa(c.mid)} بینابین</strong> • <strong style="color:${VERDICT.bad}">${toFa(c.bad)} مردود</strong>${st ? ` • میانگین تست‌ها ${f2(st.mean)} MPa` + (st.n > 1 ? `، s = ${f2(st.s)}` : '') : ''}</div>`;
+      if(rq) html += `<div class="hint">روش f'cr: ${rq.noData ? 'جدول «بدون داده» (ACI 211.1 جدول 4.7.4.1) — تعداد تست‌ها در سن طرح: ' + toFa(means.length) + ' (کمتر از ۱۵)' : 'محاسبه از داده‌های همین طرح با n = ' + toFa(means.length) + ' و ضریب اصلاح k = ' + f3(rq.k)}</div>`;
+    } else html += `<div class="hint">برای رنگ‌بندی و خطوط مرجع، f'c را در ویرایش طرح وارد کنید.</div>`;
+  }
+  html += `</div>`;
+
+  /* ---- composition ---- */
+  const parts = mixComponents(m);
+  const total = parts.reduce((a,p) => a + p.kg, 0);
+  html += `<div class="card"><div class="card-title"><span class="dot"></span> درصد اجزای تشکیل‌دهنده‌ی مخلوط (بر اساس جرم)</div>`;
+  if(!total){
+    html += `<p class="muted" style="margin:0">مقادیر آب، سیمان و سنگدانه‌ها را در ویرایش طرح وارد کنید.</p>`;
+  } else {
+    const w = m.water || 0, c = m.cement || 0, fa = m.fineAgg || 0, ca = m.coarseAgg || 0;
+    html += `<div class="md-comp"><div style="text-align:center">${donutSvg(parts, total)}</div>
+      <table class="an-table"><thead><tr><th>جزء</th><th>مقدار (kg/m³)</th><th>درصد</th></tr></thead><tbody>
+        ${parts.map(p => `<tr><td><span class="md-dot" style="background:${p.color}"></span>${escapeHtml(p.name)}</td><td>${toFa(p.kg)}</td><td>${toFa((p.kg/total*100) < 0.1 ? (p.kg/total*100).toFixed(2) : (p.kg/total*100).toFixed(1))}٪</td></tr>`).join('')}
+        <tr style="font-weight:700"><td>مجموع</td><td>${toFa(Math.round(total*10)/10)}</td><td>۱۰۰٪</td></tr>
+      </tbody></table></div>
+      <div class="md-chips">
+        ${w && c ? `<span>w/c = ${f2(w/c)}</span>` : ''}
+        ${fa && ca ? `<span>ریزدانه به کل سنگدانه = ${f1(fa/(fa+ca)*100)}٪</span>` : ''}
+        ${w && c ? `<span>خمیر (آب + سیمان) = ${f1((w+c)/total*100)}٪ جرم</span>` : ''}
+        ${m.slump ? `<span>اسلامپ هدف = ${toFa(m.slump)} mm</span>` : ''}
+        ${m.admixType ? `<span>افزودنی: ${escapeHtml(m.admixType)}${m.admixDosage ? ' (' + escapeHtml(m.admixDosage) + ')' : ''}</span>` : ''}
+      </div>
+      <div class="hint">مجموع فقط اجزایی را در بر می‌گیرد که مقدار عددی (kg/m³) دارند؛ «اجزای اضافی» را در فرم طرح با فرمت «نام: مقدار» وارد کنید.</div>`;
+  }
+  html += `</div>`;
+
+  body.innerHTML = html;
+  $$('#mdBody circle[data-i]').forEach(c => {
+    c.onclick = () => {
+      const s = specs[+c.dataset.i];
+      $('#mdInfo').innerHTML = `<strong>${escapeHtml(s.name)}</strong> (نمونه ${toFa(s.no)} از ${toFa(s.total)}) • ${toFa(s.age)} روزه • ساخت: ${jDateToString(s.build)} • <strong>${f2(s.v)} MPa</strong>${s.cube ? ' (معادل استوانه‌ای)' : ''}`;
+    };
+  });
+  const cb = $('#mdAllAges');
+  if(cb) cb.onchange = () => { MD.allAges = cb.checked; renderMixDetail(); };
+}
+$('#mdBack').addEventListener('click', () => switchView(MD.from || 'mix'));
 
 
 /* ---------- Navigation ---------- */
